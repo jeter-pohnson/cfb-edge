@@ -128,6 +128,98 @@ tbody tr:hover{background:var(--panel)}
 .flagged{color:var(--play);font-weight:700}
 .noted{color:var(--fade);font-weight:600}
 
+/* ---------------------------------------------------------- parlays */
+.parlay{border-bottom:1px solid var(--rule);padding:15px 0;display:grid;
+  grid-template-columns:1fr auto;gap:0 20px;align-items:start}
+.parlay:first-of-type{border-top:1px solid var(--rule-strong)}
+.parlay .legs{list-style:none;margin:6px 0 0;max-width:60ch}
+.parlay .legs li{font-size:13.5px;padding:3px 0 3px 18px;position:relative;color:var(--muted)}
+.parlay .legs li b{color:var(--ink);font-weight:600}
+.parlay .legs li:before{content:"";position:absolute;left:0;top:11px;width:8px;height:1px;
+  background:var(--rule-strong)}
+.parlay h3{font-size:15px;font-weight:700}
+.parlay .need{text-align:right;min-width:150px}
+.parlay .need .big{font-size:24px;font-weight:700;font-stretch:92%;line-height:1.05}
+.parlay .need .lbl{font-size:11.5px;color:var(--muted);margin-top:3px}
+
+/* ---------------------------------------------------------- teams */
+.teamcard{border-bottom:1px solid var(--rule);padding:15px 0}
+.teamcard h3{font-size:16px;font-weight:700}
+.teamcard h3 small{font-weight:400;color:var(--muted);font-size:12.5px;margin-left:8px}
+.teamcard p{font-size:13.5px;color:var(--muted);max-width:74ch;margin-top:5px;line-height:1.5}
+.bars{margin-top:10px;max-width:520px}
+.bar{display:grid;grid-template-columns:132px 1fr 34px;gap:9px;align-items:center;
+  font-size:12px;margin:3px 0}
+.bar .track{height:7px;background:var(--rule);position:relative}
+.bar .fill{position:absolute;left:0;top:0;bottom:0;background:var(--ink)}
+.bar .fill.hi{background:var(--play)}
+.bar .fill.lo{background:var(--fade)}
+.bar .v{text-align:right;color:var(--muted)}
+
+/* ---------------------------------------------------------- method */
+.method{max-width:78ch}
+.method h3{font-size:17px;font-weight:700;margin:26px 0 7px}
+.method h3:first-child{margin-top:0}
+.method p{font-size:14px;color:var(--muted);line-height:1.55;margin-bottom:9px}
+.method p.lead{color:var(--ink)}
+.bt{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;max-width:620px}
+.bt th{text-align:right;font-size:11.5px;color:var(--muted);padding:6px;
+  border-bottom:1px solid var(--rule-strong)}
+.bt th:first-child,.bt td:first-child{text-align:left}
+.bt td{padding:7px 6px;text-align:right;border-bottom:1px solid var(--rule)}
+.bt .good{color:var(--play);font-weight:700}
+.bt .bad{color:var(--fade)}
+
+/* ---------------------------------------------------------- confidence */
+.conf{display:flex;align-items:baseline;gap:7px;margin-top:9px}
+.grade{
+  font-size:26px;font-weight:800;font-stretch:88%;line-height:1;
+  width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;
+  border:2px solid currentColor;border-radius:3px;
+}
+.grade.A{color:var(--play)}
+.grade.B{color:#3B6E4F}
+.grade.C{color:#8A7A2B}
+.grade.D{color:var(--fade)}
+.conf .lbl{font-size:13px;font-weight:600}
+.conf .num{font-size:12px;color:var(--muted)}
+.conf-parts{margin-top:6px}
+.conf-parts li{
+  font-size:13px;color:var(--muted);padding:3px 0 3px 42px;position:relative;line-height:1.45;
+}
+.conf-parts li span.pts{
+  position:absolute;left:0;width:34px;text-align:right;font-weight:700;font-size:12.5px;
+}
+.conf-parts li span.up{color:var(--play)}
+.conf-parts li span.down{color:var(--fade)}
+.movement{font-size:12.5px;color:var(--muted);margin-top:7px}
+
+/* ---------------------------------------------------------- writeup */
+.why-panel{
+  border-left:3px solid var(--rule-strong);padding:2px 0 2px 14px;margin-top:12px;
+  max-width:74ch;
+}
+.why-panel h4{
+  font-size:12.5px;font-weight:700;letter-spacing:.01em;margin:14px 0 5px;
+}
+.why-panel h4:first-child{margin-top:2px}
+.why-panel p{font-size:13.5px;color:var(--muted);line-height:1.5}
+.why-panel p.lead{color:var(--ink)}
+.why-panel ul{list-style:none;margin:4px 0 0}
+.why-panel li{
+  font-size:13.5px;color:var(--muted);padding:4px 0 4px 16px;position:relative;line-height:1.45;
+}
+.why-panel li:before{
+  content:"";position:absolute;left:0;top:11px;width:6px;height:1px;background:var(--rule-strong);
+}
+.why-panel .against h4{color:var(--fade)}
+.why-panel .against li:before{background:var(--fade)}
+.inj{margin-top:12px;font-size:13px}
+.inj table{width:100%;font-size:12.5px;margin-top:4px}
+.inj td{padding:3px 6px;border-bottom:1px solid var(--rule);text-align:left}
+.inj td:last-child{text-align:right;color:var(--muted)}
+.inj .st-out{color:var(--fade);font-weight:600}
+
 /* ---------------------------------------------------------- notes */
 .notebox{background:var(--panel);border:1px solid var(--rule-strong);padding:14px;margin-top:10px}
 .notebox textarea{
@@ -169,11 +261,16 @@ tbody tr:hover{background:var(--panel)}
 
   <nav class="tabs" role="tablist">
     <button class="tab" role="tab" id="t-plays" aria-selected="true" onclick="showView('plays')">Plays</button>
+    <button class="tab" role="tab" id="t-parlays" aria-selected="false" onclick="showView('parlays')">Parlays</button>
     <button class="tab" role="tab" id="t-board" aria-selected="false" onclick="showView('board')">Full board</button>
+    <button class="tab" role="tab" id="t-teams" aria-selected="false" onclick="showView('teams')">Teams</button>
+    <button class="tab" role="tab" id="t-method" aria-selected="false" onclick="showView('method')">Method</button>
     <button class="tab" role="tab" id="t-log" aria-selected="false" onclick="showView('log')">Bet log</button>
   </nav>
 
   <section class="view on" id="v-plays"></section>
+
+  <section class="view" id="v-parlays"></section>
 
   <section class="view" id="v-board">
     <div class="controls">
@@ -187,6 +284,10 @@ tbody tr:hover{background:var(--panel)}
     </div>
     <div id="boardwrap"></div>
   </section>
+
+  <section class="view" id="v-teams"></section>
+
+  <section class="view" id="v-method"></section>
 
   <section class="view" id="v-log"></section>
 
@@ -284,6 +385,11 @@ function renderChrome(){
             num(model.total_sigma) + "</b> on totals</span>");
   bits.push("<span>Home edge <b>" + num(model.home_edge) + " pts</b></span>");
   bits.push("<span>Fitted on <b>" + (model.margin_n || 0) + "</b> games</span>");
+  if (DATA.injury_feed){
+    bits.push("<span>Injury feed <b>" +
+              (DATA.injury_feed.ok ? "live, " + DATA.injury_feed.count + " entries"
+                                   : "manual notes") + "</b></span>");
+  }
   if (DATA.quota && DATA.quota.odds_remaining !== null){
     bits.push("<span>Odds credits left <b>" + esc(DATA.quota.odds_remaining) + "</b></span>");
   }
@@ -291,13 +397,16 @@ function renderChrome(){
 }
 
 function showView(name){
-  var views = ["plays","board","log"];
+  var views = ["plays","parlays","board","teams","method","log"];
   for (var i = 0; i < views.length; i++){
     var on = views[i] === name;
     document.getElementById("v-" + views[i]).className = on ? "view on" : "view";
     document.getElementById("t-" + views[i]).setAttribute("aria-selected", on ? "true" : "false");
   }
   if (name === "log") renderLog();
+  if (name === "parlays") renderParlays();
+  if (name === "teams") renderTeams();
+  if (name === "method") renderMethod();
 }
 
 /* ------------------------------------------------------------ plays */
@@ -311,6 +420,11 @@ function allEdges(){
     }
   }
   out.sort(function(a, b){
+    var ca = (a.edge.confidence || {}).score;
+    var cb = (b.edge.confidence || {}).score;
+    ca = (ca === undefined || ca === null) ? -1 : ca;
+    cb = (cb === undefined || cb === null) ? -1 : cb;
+    if (cb !== ca) return cb - ca;
     var ea = a.edge.ev === null || a.edge.ev === undefined ? -9 : a.edge.ev;
     var eb = b.edge.ev === null || b.edge.ev === undefined ? -9 : b.edge.ev;
     return eb - ea;
@@ -361,9 +475,13 @@ function playHTML(entry){
   var logged = betFor(key);
   var evClass = (edge.ev !== null && edge.ev > 0) ? "pos" : "neg";
 
+  var conf = edge.confidence || {};
+  var grade = conf.grade || "?";
+
   var html = '<article class="play" id="p-' + esc(key) + '">';
-  html += '<div class="gapcell"><span class="gapnum">' + num(edge.gap) + "</span>";
-  html += '<span class="gapunit">' + (edge.market === "moneyline" ? "pts of prob" : "pts off") + "</span></div>";
+  html += '<div class="gapcell"><span class="grade ' + esc(grade) + '">' + esc(grade) + "</span>";
+  html += '<span class="gapunit">' + esc(conf.label || "ungraded") + "</span>";
+  html += '<span class="gapunit">' + num(edge.gap) + " pts off</span></div>";
 
   html += '<div class="playbody">';
   html += "<h3>" + esc(game.away) + " at " + esc(game.home) + "</h3>";
@@ -372,14 +490,19 @@ function playHTML(entry){
   html += '<p class="why">' + whyText(game, edge) + "</p>";
   html += '<div class="tags">' + tagsHTML(game, edge) + "</div>";
   html += '<div class="acts" style="justify-content:flex-start">';
+  html += '<button class="mini" onclick="toggleWhy(\'' + esc(key) + '\')">Why this play</button>';
   html += '<button class="mini" onclick="toggleNote(\'' + esc(game.id) + '\')">Availability note</button>';
   html += '<a class="mini" href="' + FD_BOARD + '" target="_blank" rel="noopener">Open FanDuel</a>';
   html += "</div>";
+  html += '<div id="w-' + esc(key) + '"></div>';
   html += '<div id="n-' + esc(game.id) + '"></div>';
   html += "</div>";
 
   html += '<div class="numcell">';
-  html += '<div class="ev ' + evClass + '">' + signed(edge.ev === null ? 0 : edge.ev * 100) + "%</div>";
+  html += '<div class="ev">' + esc(conf.score === undefined ? "-" : conf.score) + "</div>";
+  html += '<div class="evlabel">confidence of 100</div>';
+  html += '<div class="ev ' + evClass + '" style="font-size:15px;margin-top:8px">' +
+          signed(edge.ev === null ? 0 : edge.ev * 100) + "%</div>";
   html += '<div class="evlabel">expected value</div>';
   html += '<div class="stake">' + esc(kickText(game.kickoff)) + "</div>";
   html += '<div class="acts">';
@@ -408,10 +531,13 @@ function renderPlays(){
   var strict = 0;
   for (var i = 0; i < entries.length; i++){ if (entries[i].edge.strict) strict++; }
 
+  var t = DATA.tiers || {};
   var html = '<div class="warn">' + entries.length + " plays clear the 2 point flag, " +
-    strict + " of them also clear 3. The model's own error on a single game is " +
-    num((DATA.model || {}).margin_sigma) + " points, so a 2 point gap is well inside the " +
-    "noise band. Log both and let the closing line value decide which threshold holds up.</div>";
+    strict + " of them also clear 3. Graded A " + (t.A || 0) + ", B " + (t.B || 0) +
+    ", C " + (t.C || 0) + ", D " + (t.D || 0) + ". Sorted by confidence, which measures " +
+    "how much the tool trusts its own number rather than how likely the bet is to win. " +
+    "The model's error on a single game is " + num((DATA.model || {}).margin_sigma) +
+    " points, so anything graded C or D has a gap sitting inside that noise.</div>";
 
   for (var j = 0; j < entries.length; j++){ html += playHTML(entries[j]); }
   host.innerHTML = html;
@@ -429,6 +555,7 @@ function boardValue(game, key){
   if (key === "total") return game.posted.total === null ? 0 : game.posted.total;
   if (key === "fair_total") return game.fair_total === null ? 0 : game.fair_total;
   if (key === "best_gap") return game.best_gap || 0;
+  if (key === "best_confidence") return game.best_confidence === null || game.best_confidence === undefined ? -1 : game.best_confidence;
   if (key === "best_ev") return game.best_ev === null || game.best_ev === undefined ? -9 : game.best_ev;
   return 0;
 }
@@ -476,12 +603,13 @@ function boardRow(game){
   html += "<td>" + (game.fair_spread === null ? "-" : signed(game.fair_spread)) + "</td>";
   html += "<td>" + (game.posted.total === null ? "-" : num(game.posted.total)) + "</td>";
   html += "<td>" + (game.fair_total === null ? "-" : num(game.fair_total)) + "</td>";
+  html += "<td>" + (game.best_confidence === null || game.best_confidence === undefined ? "-" : game.best_confidence) + "</td>";
   html += '<td class="' + (flagged ? "flagged" : "") + '">' + num(game.best_gap) + "</td>";
   html += '<td class="' + (flagged ? "flagged" : "") + '">' +
           (game.best_ev === null || game.best_ev === undefined ? "-" : signed(game.best_ev * 100)) + "%</td>";
   html += '<td><button class="mini" onclick="toggleNote(\'' + esc(game.id) + '\')">Note</button></td>';
   html += "</tr>";
-  html += '<tr><td colspan="8" style="padding:0;border:none"><div id="bn-' + esc(game.id) + '"></div></td></tr>';
+  html += '<tr><td colspan="9" style="padding:0;border:none"><div id="bn-' + esc(game.id) + '"></div></td></tr>';
   return html;
 }
 
@@ -493,15 +621,418 @@ function renderBoard(){
   html += headCell("fair_spread", "Fair");
   html += headCell("total", "FD total");
   html += headCell("fair_total", "Fair");
+  html += headCell("best_confidence", "Conf");
   html += headCell("best_gap", "Gap");
   html += headCell("best_ev", "Best EV");
   html += "<th></th></tr></thead><tbody>";
   if (!rows.length){
-    html += '<tr><td colspan="8" class="empty">Nothing matches that filter.</td></tr>';
+    html += '<tr><td colspan="9" class="empty">Nothing matches that filter.</td></tr>';
   }
   for (var i = 0; i < rows.length; i++){ html += boardRow(rows[i]); }
   html += "</tbody></table>";
   document.getElementById("boardwrap").innerHTML = html;
+}
+
+/* ------------------------------------------------------------ writeup */
+
+function listHTML(items){
+  var html = "<ul>";
+  for (var i = 0; i < items.length; i++){ html += "<li>" + esc(items[i]) + "</li>"; }
+  return html + "</ul>";
+}
+
+function injuryTable(entries, team){
+  if (!entries || !entries.length) return "";
+  var html = '<div class="inj"><b>' + esc(team) + "</b><table><tbody>";
+  for (var i = 0; i < entries.length; i++){
+    var row = entries[i];
+    var state = (row.status || "").toLowerCase();
+    var severe = state.indexOf("out") > -1 || state.indexOf("doubtful") > -1 ||
+                 state.indexOf("suspend") > -1;
+    html += "<tr><td>" + esc(row.player) +
+            (row.position ? " (" + esc(row.position) + ")" : "") + "</td>";
+    html += '<td class="' + (severe ? "st-out" : "") + '">' + esc(row.status || "") +
+            (row.return_date ? " &middot; back " + esc(row.return_date) : "") + "</td></tr>";
+  }
+  return html + "</tbody></table></div>";
+}
+
+function whyHTML(game, edge){
+  var w = edge.writeup;
+  if (!w){
+    return '<div class="why-panel"><p>No explanation was generated for this play. ' +
+           'That usually means a stat was missing for one of the teams, which is ' +
+           'itself a reason to be careful with it.</p></div>';
+  }
+
+  var html = '<div class="why-panel">';
+
+  html += "<h4>How the number was built</h4>";
+  html += '<p class="lead">' + esc(w.build) + "</p>";
+
+  if (edge.style_notes && edge.style_notes.length){
+    html += "<h4>Style angle</h4>";
+    html += listHTML(edge.style_notes);
+  }
+
+  if (w.drivers && w.drivers.length){
+    html += "<h4>What supports it</h4>";
+    var lines = [];
+    for (var i = 0; i < w.drivers.length; i++){ lines.push(w.drivers[i].text); }
+    html += listHTML(lines);
+  }
+
+  html += "<h4>The maths</h4>";
+  html += "<p>" + esc(w.maths) + "</p>";
+
+  var conf = edge.confidence;
+  if (conf){
+    html += "<h4>Confidence " + esc(conf.score) + " of 100, graded " +
+            esc(conf.grade) + "</h4>";
+    html += "<p>This is how much the tool trusts its own number here, not how " +
+            "likely the bet is to win. Every component starts from a base of 50.</p>";
+    html += '<ul class="conf-parts">';
+    for (var c = 0; c < conf.parts.length; c++){
+      var part = conf.parts[c];
+      var cls = part.points > 0 ? "up" : "down";
+      html += '<li><span class="pts ' + cls + '">' +
+              (part.points > 0 ? "+" : "") + part.points + "</span>" +
+              esc(part.reason) + "</li>";
+    }
+    html += "</ul>";
+  }
+
+  var mv = game.movement || {};
+  if (mv.snapshots > 1){
+    var d = edge.market === "total" ? mv.total_delta : mv.spread_delta;
+    if (d !== null && d !== undefined){
+      html += '<p class="movement">Line first seen ' + num(mv.seen_for_hours, 0) +
+              " hours ago across " + mv.snapshots + " snapshots, moving " +
+              signed(d) + " points since.</p>";
+    }
+  }
+
+  var inj = game.injuries || {};
+  if ((inj.home && inj.home.length) || (inj.away && inj.away.length)){
+    html += "<h4>Reported availability</h4>";
+    html += injuryTable(inj.away, game.away);
+    html += injuryTable(inj.home, game.home);
+  }
+
+  if (w.against && w.against.length){
+    html += '<div class="against"><h4>The case against</h4>';
+    html += listHTML(w.against) + "</div>";
+  }
+
+  return html + "</div>";
+}
+
+function toggleWhy(key){
+  var host = document.getElementById("w-" + key);
+  if (!host) return;
+  if (host.innerHTML){ host.innerHTML = ""; return; }
+  var parts = key.split("|");
+  var game = gameById(parts[0]);
+  if (!game) return;
+  var edge = findEdge(game, parts[1], parts[2]);
+  if (!edge) return;
+  host.innerHTML = whyHTML(game, edge);
+}
+
+/* ------------------------------------------------------------ parlays */
+
+function parlayHTML(parlay){
+  var html = '<article class="parlay"><div>';
+  html += "<h3>" + parlay.size + " legs, average confidence " +
+          num(parlay.avg_confidence, 0) + "</h3>";
+  html += '<ul class="legs">';
+  for (var i = 0; i < parlay.legs.length; i++){
+    var leg = parlay.legs[i];
+    html += "<li><b>" + esc(leg.label) + "</b> " + priceText(leg.price) +
+            " &middot; " + esc(leg.game) + " &middot; grade " + esc(leg.grade) +
+            ", model " + pct(leg.prob) + "</li>";
+  }
+  html += "</ul></div>";
+
+  html += '<div class="need">';
+  html += '<div class="big">' + esc(parlay.break_even_display) + "</div>";
+  html += '<div class="lbl">price needed to break even</div>';
+  html += '<div class="big" style="font-size:17px;margin-top:11px">' +
+          num(parlay.hits_per_hundred) + "%</div>";
+  html += '<div class="lbl">model says it hits this often</div>';
+  html += '<div class="lbl" style="margin-top:9px">legs multiply out to ' +
+          esc(parlay.true_multiplied_display) + "</div>";
+  html += "</div></article>";
+  return html;
+}
+
+function renderParlays(){
+  var host = document.getElementById("v-parlays");
+  var data = DATA.parlays || {};
+  var list = data.parlays || [];
+
+  var html = '<div class="warn">Read this once before using this tab. No ' +
+    'expected value is shown here, deliberately. The free odds feed does not ' +
+    'carry FanDuel\'s parlay prices, so any expected value figure would be ' +
+    'built on a guess about their margin and would look far more authoritative ' +
+    'than it deserves. What is shown instead is the price each parlay needs in ' +
+    'order to break even. Pull up the same parlay in the FanDuel app and compare. ' +
+    'If their price is shorter than the break-even number, it is a pass, and no ' +
+    'modelling is needed to see that. Legs are never taken from the same game, ' +
+    'because same-game legs are correlated and multiplying them as if they were ' +
+    'independent overstates the odds of hitting.</div>';
+
+  if (!list.length){
+    html += '<p class="empty">' + esc(data.note || "No parlays available.") +
+            " Legs need a confidence score of 60 or better, and only the " +
+            "strongest play from each game is eligible.</p>";
+    host.innerHTML = html;
+    return;
+  }
+
+  html += '<p class="empty" style="padding:6px 0 14px">' + data.legs_available +
+          " legs qualified. Ranked by average leg confidence rather than by " +
+          "payout, since ranking by payout puts the worst bets at the top.</p>";
+
+  for (var i = 0; i < list.length; i++){ html += parlayHTML(list[i]); }
+  host.innerHTML = html;
+}
+
+/* ------------------------------------------------------------ teams */
+
+var PCT_LABELS = {
+  off_success: "Offensive efficiency", off_explosive: "Explosiveness",
+  off_ppa: "Offensive output", run_rate: "Run rate", pace: "Tempo",
+  def_success_inv: "Defensive efficiency", def_explosive_inv: "Big plays prevented",
+  def_havoc: "Havoc created", line_yards: "Run blocking",
+  stuff_rate_inv: "Run defence"
+};
+var PCT_ORDER = ["off_ppa","off_success","off_explosive","run_rate","pace",
+                 "line_yards","def_success_inv","def_explosive_inv",
+                 "def_havoc","stuff_rate_inv"];
+
+function barHTML(label, value){
+  var cls = value >= 75 ? "hi" : (value <= 25 ? "lo" : "");
+  return '<div class="bar"><span>' + esc(label) + '</span>' +
+         '<span class="track"><span class="fill ' + cls + '" style="width:' +
+         value + '%"></span></span><span class="v">' + value + "</span></div>";
+}
+
+function teamCardHTML(profile){
+  var html = '<article class="teamcard"><h3>' + esc(profile.school) +
+             "<small>" + esc(profile.conference || "") + "</small></h3>";
+  html += "<p>" + esc(profile.headline) + "</p>";
+
+  html += '<div class="bars">';
+  for (var i = 0; i < PCT_ORDER.length; i++){
+    var key = PCT_ORDER[i];
+    var value = profile.percentiles[key];
+    if (value === undefined || value === null) continue;
+    html += barHTML(PCT_LABELS[key] || key, value);
+  }
+  html += "</div>";
+  html += '<p style="margin-top:9px;font-size:12.5px">Percentile against the FBS ' +
+          "field, rebuilt every run. 100 is the best in the country on that " +
+          "measure, except run rate and tempo which are descriptive rather than " +
+          "good or bad.</p>";
+  return html + "</article>";
+}
+
+function renderTeams(){
+  // The search box is rendered once and left alone. Rebuilding it on every
+  // keystroke would destroy the element the user is typing into.
+  var host = document.getElementById("v-teams");
+  var profiles = DATA.profiles || {};
+  var schools = Object.keys(profiles).sort();
+
+  if (!schools.length){
+    host.innerHTML = '<p class="empty">No team profiles were generated. This ' +
+      "happens when the advanced stats feed has not populated yet, which is " +
+      "normal in the first two weeks of a season.</p>";
+    return;
+  }
+
+  if (!document.getElementById("tq")){
+    host.innerHTML = '<div class="controls"><input id="tq" type="search" ' +
+      'placeholder="Filter by team" oninput="renderTeamList()"></div>' +
+      '<div id="teamlist"></div>';
+  }
+  renderTeamList();
+}
+
+function renderTeamList(){
+  var profiles = DATA.profiles || {};
+  var schools = Object.keys(profiles).sort();
+  var box = document.getElementById("tq");
+  var query = ((box && box.value) || "").toLowerCase().trim();
+
+  var html = "";
+  var shown = 0;
+  for (var i = 0; i < schools.length; i++){
+    if (query && schools[i].toLowerCase().indexOf(query) === -1) continue;
+    html += teamCardHTML(profiles[schools[i]]);
+    shown++;
+  }
+  if (!shown) html += '<p class="empty">No team matches that filter.</p>';
+  document.getElementById("teamlist").innerHTML = html;
+}
+
+/* ------------------------------------------------------------ method */
+
+function backtestTable(rows, title){
+  var html = "<h3>" + esc(title) + "</h3><table class=\"bt\"><thead><tr>" +
+             "<th>Gap in points</th><th>Won</th><th>Lost</th><th>Push</th>" +
+             "<th>Hit rate</th><th>vs break-even</th></tr></thead><tbody>";
+  for (var i = 0; i < rows.length; i++){
+    var row = rows[i];
+    var thin = row.decided < 60;
+    html += "<tr><td>" + esc(row.bucket) + "</td>";
+    html += "<td>" + row.wins + "</td><td>" + row.losses + "</td><td>" + row.pushes + "</td>";
+    if (row.rate === null){
+      html += '<td colspan="2" style="color:var(--muted)">no games</td>';
+    } else if (thin){
+      html += "<td>" + pct(row.rate) + '</td><td style="color:var(--muted)">' +
+              "sample too thin to use</td>";
+    } else {
+      var good = row.edge_vs_breakeven > 0;
+      html += '<td class="' + (good ? "good" : "bad") + '">' + pct(row.rate) + "</td>";
+      html += '<td class="' + (good ? "good" : "bad") + '">' +
+              signed(row.edge_vs_breakeven) + " pts</td>";
+    }
+    html += "</tr>";
+  }
+  return html + "</tbody></table>";
+}
+
+function renderMethod(){
+  var host = document.getElementById("v-method");
+  var model = DATA.model || {};
+  var bt = DATA.backtest || {};
+
+  var html = '<div class="method">';
+
+  html += "<h3>What the model actually does</h3>";
+  html += '<p class="lead">Each team carries an SP+ rating in points. The fair ' +
+    "margin for a game is a fitted function of the two ratings plus a home " +
+    "edge, and the coefficients are not assumed. They are solved by least " +
+    "squares against " + (model.margin_n || 0) + " completed games, so if the " +
+    "underlying data changes its scale or sign convention, the fit absorbs it " +
+    "rather than quietly inverting every pick.</p>";
+  html += "<p>The model's error is currently <b>" + num(model.margin_sigma) +
+    " points</b> on margin and <b>" + num(model.total_sigma) + "</b> on totals, " +
+    "taken from the " + esc(model.sigma_source || "fit") + ". This is the single " +
+    "most important number on the site. It is how wrong the model is on a " +
+    "typical game, and every gap should be read against it. The fitted home " +
+    "edge came out at " + num(model.home_edge) + " points.</p>";
+  if (model.in_sample_margin_sigma && model.sigma_source &&
+      model.sigma_source.indexOf("out of sample") > -1){
+    html += "<p>For comparison, fitting the model against the same games it " +
+      "was built from gives " + num(model.in_sample_margin_sigma) + " points. " +
+      "That figure is too flattering, because current-season ratings are " +
+      "themselves computed from the results being predicted. Using it would " +
+      "quietly inflate every cover probability on this board, so the " +
+      "out-of-sample number is what gets used.</p>";
+  }
+
+  html += "<h3>What a gap means, and what it does not</h3>";
+  html += "<p>The model builds its own spread with no knowledge of FanDuel's. " +
+    "The gap is the distance between the two numbers. A gap is not an edge. It " +
+    "becomes one only if the model is right and the market is wrong, and with " +
+    "an error of " + num(model.margin_sigma) + " points a gap of 2 is a small " +
+    "fraction of the model's routine miss. That is why confidence exists as a " +
+    "separate number from expected value.</p>";
+
+  html += "<h3>Does the threshold actually work</h3>";
+  if (bt.available){
+    html += "<p>An earlier version of this used last season's ratings to " +
+      "predict this season's games. That was wrong, and for the reason you " +
+      "would expect: in the transfer portal era a year-old rating describes a " +
+      "roster that has partly left. It measured a worse model than the one " +
+      "actually running here.</p>";
+    html += "<p>" + esc(bt.note) + " " + (bt.graded || 0) +
+            " games were graded against closing lines across " +
+            (bt.weeks_used || 0) + " weeks, starting at week " +
+            (bt.first_week || 5) + " because earlier weeks have too little " +
+            "played to rate anyone. Buckets with fewer than 60 decided games " +
+            "are shown but not used for scoring.</p>";
+    html += "<p>One honest limit. The ratings used here are solved from " +
+      "margins alone, which is a simpler object than the SP+ the live board " +
+      "uses. So this is still a proxy, and a mildly pessimistic one, but it is " +
+      "built the same structural way and fed the same kind of information.</p>";
+    html += backtestTable(bt.spread || [], "Spread, by size of disagreement");
+    html += backtestTable(bt.total || [], "Totals, by size of disagreement");
+    html += "<p style=\"margin-top:12px\">Where a bucket has a usable sample, " +
+      "its measured hit rate replaces the noise estimate in the confidence " +
+      "score. Where it does not, confidence falls back to comparing the gap " +
+      "against the model error and says so in the breakdown.</p>";
+  } else {
+    html += "<p>The backtest did not run. " + esc(bt.note || "") +
+            " Confidence is falling back to noise estimates, which are " +
+            "reasoned rather than measured.</p>";
+  }
+
+  var kn = DATA.key_numbers || {};
+  html += "<h3>Key numbers, measured</h3>";
+  if (kn.available){
+    html += "<p>" + esc(kn.note) + " The old version of this used a hardcoded " +
+      "list borrowed from NFL thinking, which is wrong for this sport: 3 is " +
+      "still the most common college margin but carries around two thirds the " +
+      "weight it does in the NFL, and college margins scatter far more widely, " +
+      "so large numbers like 24 and 28 matter in a way they never do in the " +
+      "pros.</p>";
+    html += "<p>Now the value of moving from the posted number to the fair " +
+      "number is simply the share of past margins sitting between them, " +
+      "measured within the same spread range. Most common margins by band:</p>";
+    html += '<table class="bt"><thead><tr><th>Spread range</th>' +
+            "<th>Most common margins</th><th>Games</th></tr></thead><tbody>";
+    var tops = kn.top_margins || {};
+    for (var band in tops){
+      if (!tops.hasOwnProperty(band)) continue;
+      var parts = [];
+      for (var t = 0; t < tops[band].length; t++){
+        parts.push(tops[band][t].margin + " (" + tops[band][t].share + "%)");
+      }
+      html += "<tr><td>" + esc(band) + "</td><td>" + esc(parts.join(", ")) +
+              "</td><td>" + ((kn.band_counts || {})[band] || 0) + "</td></tr>";
+    }
+    html += "</tbody></table>";
+  } else {
+    html += "<p>Not measured this run. " + esc(kn.note || "") + "</p>";
+  }
+
+  html += "<h3>What is being tested this season</h3>";
+  html += "<p>Two things are flagged but deliberately scored as zero, because " +
+    "assuming the answer would defeat the purpose. Openers are marked but not " +
+    "rewarded, even though betting early into soft numbers is the most repeated " +
+    "advice in the literature. And confidence grades are recorded on every " +
+    "logged bet without being trusted. The bet log splits closing line value by " +
+    "both, so by December the data says whether either is real. If graded A " +
+    "plays do not beat graded C plays, the weights are wrong and should change.</p>";
+
+  html += "<h3>How confidence is scored</h3>";
+  html += "<p>Confidence is not the chance of winning, which is the cover " +
+    "probability and is shown separately. It is how much the tool trusts its " +
+    "own number on that game. Scoring starts at 50 and moves on components " +
+    "that are each named in the play's breakdown: the measured record for that " +
+    "gap size, whether it clears 3 points rather than 2, key numbers crossed, " +
+    "which way the line has moved since first seen, whether either rating " +
+    "leaned on substituted league-average data, whether the matchup profile " +
+    "supports the side at all, style mismatches, market structure, and " +
+    "reported injuries when that feed is on.</p>";
+  html += "<p>Grades are A from 78, B from 64, C from 50, D below. Nothing in " +
+    "that scale is sacred. It is a reading aid, and the bet log records the " +
+    "grade so that by December you can check whether the A plays actually beat " +
+    "the C plays. If they did not, the weights were wrong and should change.</p>";
+
+  html += "<h3>What it cannot see</h3>";
+  html += "<p>Weather. Motivation, lookahead spots and rivalry games. " +
+    "Coaching changes and scheme shifts inside a season. Suspensions that " +
+    "never appear in an availability report. Why sharp money moved a number. " +
+    "Everything in this last paragraph is your job, and it is the reason the " +
+    "board flags plays rather than placing them.</p>";
+
+  html += "</div>";
+  host.innerHTML = html;
 }
 
 /* ------------------------------------------------------------ notes */
@@ -586,6 +1117,11 @@ function logBet(gameId, market, side){
     ev: edge.ev,
     gap: edge.gap,
     strict: edge.strict,
+    grade: (edge.confidence || {}).grade || null,
+    conf_score: (edge.confidence || {}).score || null,
+    game_id: game.id,
+    opener: !!game.opener,
+    seen_hours: (game.movement || {}).seen_for_hours || 0,
     stake: UNIT,
     closing_line: null,
     result: null
@@ -627,17 +1163,51 @@ function betProfit(bet){
   return -bet.stake;
 }
 
+function autoClosing(bet){
+  // The build freezes every game's last posted number before kickoff, so the
+  // closing line is already here. Typing it in by hand is the step everyone
+  // stops doing by October, and CLV is the one measurement worth protecting.
+  var row = (DATA.closings || {})[bet.game_id];
+  if (!row) return null;
+  if (bet.market === "total") return row.total;
+  return row.spread;
+}
+
+function closingFor(bet){
+  // A number you typed in is always trusted: you looked at the board.
+  if (bet.closing_line !== null && bet.closing_line !== undefined){
+    return { value: bet.closing_line, auto: false, stale: false };
+  }
+  var row = (DATA.closings || {})[bet.game_id];
+  var auto = autoClosing(bet);
+  if (auto === null || auto === undefined) return null;
+  return {
+    value: auto,
+    auto: true,
+    stale: !!(row && row.stale),
+    hours: row ? row.hours_before_kickoff : null
+  };
+}
+
 function clvPoints(bet){
-  if (bet.closing_line === null || bet.closing_line === undefined) return null;
+  var closing = closingFor(bet);
+  if (!closing) return null;
+  // A number captured days before kickoff is not a close. Averaging it in
+  // would produce a confident CLV figure resting on a stale price, which is
+  // worse than having no figure at all.
+  if (closing.stale) return null;
   var taken = parseFloat(String(bet.line).replace(/[^0-9.\-+]/g, ""));
   if (isNaN(taken)) return null;
-  // Positive means the number moved toward the side already taken.
+
   if (bet.market === "total"){
+    // An over wants the closing total higher than the one taken.
     return String(bet.line).charAt(0) === "o"
-      ? bet.closing_line - taken
-      : taken - bet.closing_line;
+      ? closing.value - taken
+      : taken - closing.value;
   }
-  return taken - bet.closing_line;
+  // Spread taken from the backed side's perspective: a bigger number at close
+  // means the value was on the side already held.
+  return taken - closing.value;
 }
 
 function logRow(bet, index){
@@ -647,11 +1217,27 @@ function logRow(bet, index){
   html += '<td><div class="matchup">' + esc(bet.bet) + "<small>" + esc(bet.game) +
           " &middot; " + esc(kickText(bet.kickoff)) + "</small></div></td>";
   html += "<td>" + priceText(bet.price) + "</td>";
+  html += "<td>" + esc(bet.grade || "-") + (bet.opener ? " <small>open</small>" : "") + "</td>";
   html += "<td>" + num(bet.gap) + (bet.strict ? " (3+)" : "") + "</td>";
   html += "<td>" + signed(bet.ev === null ? 0 : bet.ev * 100) + "%</td>";
-  html += '<td><input style="width:72px" inputmode="decimal" value="' +
-          (bet.closing_line === null ? "" : esc(bet.closing_line)) +
-          '" onchange="setClosing(' + index + ', this.value)" placeholder="close"></td>';
+  var closing = closingFor(bet);
+  var closeCell;
+  if (closing && closing.auto && closing.stale){
+    closeCell = '<td title="captured ' + num(closing.hours, 0) +
+                ' hours before kickoff, too early to count as a close">' +
+                signed(closing.value) +
+                ' <small style="color:var(--fade)">stale</small></td>';
+  } else if (closing && closing.auto){
+    closeCell = '<td title="captured close to kickoff">' +
+                signed(closing.value) + " <small>auto</small></td>";
+  } else {
+    closeCell = '<td><input style="width:72px" inputmode="decimal" value="' +
+                (bet.closing_line === null || bet.closing_line === undefined
+                 ? "" : esc(bet.closing_line)) +
+                '" onchange="setClosing(' + index + ', this.value)" ' +
+                'placeholder="pending"></td>';
+  }
+  html += closeCell;
   html += '<td class="' + (clv === null ? "" : (clv > 0 ? "flagged" : "noted")) + '">' +
           (clv === null ? "-" : signed(clv)) + "</td>";
   html += '<td><select onchange="setResult(' + index + ', this.value)">' +
@@ -701,6 +1287,8 @@ function renderLog(){
   var roi = staked ? (profit / staked) * 100 : 0;
   var strictRoi = strictStaked ? (strictProfit / strictStaked) * 100 : 0;
 
+  var splits = clvSplits();
+
   var html = '<div class="summary">';
   html += statHTML(BETS.length + "", "bets logged");
   html += statHTML(settled ? wins + "-" + (settled - wins) : "0-0", "settled record");
@@ -710,14 +1298,98 @@ function renderLog(){
   html += statHTML(strictStaked ? signed(strictRoi) + "%" : "-", "return on 3+ pt plays");
   html += "</div>";
 
-  html += "<table><thead><tr><th>Bet</th><th>Price</th><th>Gap</th><th>EV</th>" +
+  html += "<table><thead><tr><th>Bet</th><th>Price</th><th>Grade</th><th>Gap</th><th>EV</th>" +
           "<th>Close</th><th>CLV</th><th>Result</th><th>P/L</th><th></th></tr></thead><tbody>";
   for (var j = 0; j < BETS.length; j++){ html += logRow(BETS[j], j); }
   html += "</tbody></table>";
-  html += '<div class="warn">Enter the number FanDuel closed at, not the one you took. ' +
-          'Positive CLV means you beat the close. Sustained positive CLV is the only ' +
-          'early evidence that the edges are real, and it shows up long before the record does.</div>';
+  var quality = DATA.closing_quality || {};
+  if (quality.stale){
+    html += '<div class="warn">' + quality.stale + " of " + quality.captured +
+      " captured closing lines were recorded more than 12 hours before " +
+      "kickoff, so they are marked stale and left out of the CLV figures " +
+      "above. That happens when no build ran near kickoff. Either run one on " +
+      "Saturday before the games start, type those closing numbers in " +
+      "yourself, or uncomment the Saturday schedule in the workflow file, " +
+      "which costs 12 credits a month.</div>";
+  }
+
+  html += clvBreakdownHTML(splits);
+  html += '<div class="warn">Closing lines are captured automatically before ' +
+          'kickoff, so rows marked auto need nothing from you. Positive CLV ' +
+          'means you beat the close. Over a large sample, bettors with positive ' +
+          'CLV are profitable and bettors with negative CLV are not, while win ' +
+          'rate says very little either way until the sample is far larger than ' +
+          'one season. This is the table to read first.</div>';
   host.innerHTML = html;
+}
+
+function clvSplits(){
+  // Split by the two things we are actually trying to test: whether the
+  // confidence grade means anything, and whether betting openers is better
+  // than betting a settled number.
+  var groups = {
+    "Graded A or B": function(b){ return b.grade === "A" || b.grade === "B"; },
+    "Graded C or D": function(b){ return b.grade === "C" || b.grade === "D"; },
+    "Openers": function(b){ return !!b.opener; },
+    "Settled lines": function(b){ return !b.opener; },
+    "Cleared 3 pts": function(b){ return !!b.strict; },
+    "2 to 3 pts only": function(b){ return !b.strict; }
+  };
+
+  var out = [];
+  for (var name in groups){
+    if (!groups.hasOwnProperty(name)) continue;
+    var sum = 0, n = 0, wins = 0, settled = 0, profit = 0, staked = 0;
+    for (var i = 0; i < BETS.length; i++){
+      var bet = BETS[i];
+      if (!groups[name](bet)) continue;
+      var clv = clvPoints(bet);
+      if (clv !== null){ sum += clv; n++; }
+      if (bet.result){
+        settled++;
+        if (bet.result === "win") wins++;
+        profit += betProfit(bet);
+        staked += bet.stake;
+      }
+    }
+    out.push({
+      name: name, count: n,
+      avg_clv: n ? sum / n : null,
+      record: settled ? wins + "-" + (settled - wins) : "-",
+      roi: staked ? (profit / staked) * 100 : null
+    });
+  }
+  return out;
+}
+
+function clvBreakdownHTML(splits){
+  var any = false;
+  for (var i = 0; i < splits.length; i++){ if (splits[i].count) any = true; }
+  if (!any) return "";
+
+  var html = '<h3 style="font-size:16px;font-weight:700;margin:26px 0 8px">' +
+             "Closing line value by bucket</h3>";
+  html += '<p class="empty" style="padding:0 0 10px">Each row is a question the ' +
+          "tool cannot answer for you. If graded A plays do not beat graded C " +
+          "plays on CLV, the confidence weights are wrong. If openers do not " +
+          "beat settled lines, betting early is not worth the trouble.</p>";
+  html += '<table class="bt"><thead><tr><th>Bucket</th><th>Bets</th>' +
+          "<th>Average CLV</th><th>Record</th><th>Return</th></tr></thead><tbody>";
+  for (var j = 0; j < splits.length; j++){
+    var row = splits[j];
+    if (!row.count && row.record === "-") continue;
+    var cls = row.avg_clv === null ? "" : (row.avg_clv > 0 ? "good" : "bad");
+    html += "<tr><td>" + esc(row.name) + "</td><td>" + row.count + "</td>";
+    html += '<td class="' + cls + '">' +
+            (row.avg_clv === null ? "-" : signed(row.avg_clv, 2)) + "</td>";
+    html += "<td>" + esc(row.record) + "</td>";
+    html += "<td>" + (row.roi === null ? "-" : signed(row.roi) + "%") + "</td></tr>";
+  }
+  html += "</tbody></table>";
+  html += '<p class="empty" style="padding:8px 0 0">Treat anything under about ' +
+          "100 bets in a bucket as unreadable. Sustained CLV of 1 to 3 points " +
+          "is a strong signal; a handful of bets is noise wearing a number.</p>";
+  return html;
 }
 
 function statHTML(value, label){

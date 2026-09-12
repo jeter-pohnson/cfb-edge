@@ -13,7 +13,9 @@ import os
 import sys
 import traceback
 
-from . import cfbd_client, config, names, odds_client, ratings
+from . import (backtest, cfbd_client, confidence, config, history, injuries,
+               keynumbers, names, odds_client, parlays, profiles, ratings,
+               writeup)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, "docs")
@@ -31,6 +33,16 @@ INJURY_LINKS = [
 
 def log(message):
     print(message, flush=True)
+
+
+def _kickoff_ts(iso):
+    if not iso:
+        return None
+    try:
+        return dt.datetime.fromisoformat(
+            iso.replace("Z", "+00:00")).timestamp()
+    except (ValueError, AttributeError):
+        return None
 
 
 # ---------------------------------------------------------------- slate
@@ -90,6 +102,7 @@ def gather_calibration(team_tables, game_sets):
 
 
 def score_game(home_row, away_row, posted, neutral, model):
+    """Return fair numbers plus every flagged edge for one game."""
     fair_margin = ratings.predict(model["margin_coeffs"],
                                   ratings.margin_row(home_row, away_row, neutral))
     fair_total = ratings.predict(model["total_coeffs"],
@@ -249,6 +262,13 @@ def main():
 
     table_now = ratings.build_team_table(teams, sp_now, advanced_now, returning)
 
+    profiles.enrich(table_now, advanced_now)
+
+    if injuries.enabled():
+        log("Pulling injury feed")
+    injury_map = injuries.fetch_injuries(teams)
+    log("  %s" % injuries.status["note"])
+
     log("Pulling %s for calibration" % config.CALIBRATION_SEASON)
     sp_prev = cfbd_client.calibration_sp(config.CALIBRATION_SEASON)
     games_prev = cfbd_client.calibration_games(config.CALIBRATION_SEASON)
@@ -269,6 +289,48 @@ def main():
         % (model["margin_n"], model["margin_sigma"], hfa))
     if model["total_coeffs"] is not None:
         log("  total:  n=%d, sigma=%.2f pts" % (model["total_n"], model["total_sigma"]))
+
+    log("Walk-forward backtest on %s" % (config.SEASON - 1))
+    try:
+        report = backtest.run(config.SEASON - 1)
+        if report.get("available"):
+            for row in report["spread"]:
+                if row["decided"] >= 60:
+                    log("  spread gap %s: %d-%d, %.1f%%"
+                        % (row["bucket"], row["wins"], row["losses"],
+                           row["rate"] * 100))
+        else:
+            log("  %s" % report.get("note"))
+    except Exception as exc:  # noqa: BLE001
+        log("  backtest unavailable (%s), confidence falls back to noise estimates"
+            % exc)
+        report = {"available": False, "note": str(exc)}
+
+    # The in-sample fit understates error, because current-season ratings are
+    # themselves built from the games being fitted. An understated error
+    # inflates every cover probability on the board, so where the walk-forward
+    # run produced a genuine out-of-sample figure, that one wins.
+    model["in_sample_margin_sigma"] = model["margin_sigma"]
+    model["in_sample_total_sigma"] = model["total_sigma"]
+    model["sigma_source"] = "in-sample fit"
+
+    if report.get("available") and report.get("oos_margin_sigma"):
+        model["margin_sigma"] = report["oos_margin_sigma"]
+        if report.get("oos_total_sigma"):
+            model["total_sigma"] = report["oos_total_sigma"]
+        model["sigma_source"] = "walk-forward out of sample"
+        log("  error: in-sample %.2f, out of sample %.2f, using out of sample"
+            % (model["in_sample_margin_sigma"], model["margin_sigma"]))
+
+    log("Measuring key numbers from recent seasons")
+    try:
+        keys = keynumbers.build(config.SEASON)
+        log("  %s" % keys.get("note", "unavailable"))
+    except Exception as exc:  # noqa: BLE001
+        log("  key numbers unavailable (%s)" % exc)
+        keys = {"available": False, "note": str(exc)}
+
+    style_pcts = profiles.percentiles(table_now)
 
     log("Pulling the FanDuel board")
     board = odds_client.fetch_board()
@@ -294,7 +356,13 @@ def main():
             "completed": game.get("completed"),
         }
 
+    line_history = history.load()
+    closings = history.load_closings()
+    log("  tracking %d live lines, %d closing lines captured"
+        % (len(line_history), len(closings)))
+
     unmatched = set()
+    live_ids = set()
     rows = []
 
     for event in board:
@@ -328,6 +396,13 @@ def main():
         scored = score_game(home_row, away_row, posted,
                             info.get("neutral", False), model)
 
+        move = history.movement(line_history, posted["odds_id"],
+                                posted["spread"], posted["total"])
+        history.record(line_history, posted["odds_id"],
+                       "%s at %s" % (away_school, home_school),
+                       _kickoff_ts(posted["kickoff"]), posted)
+        live_ids.add(posted["odds_id"])
+
         best_ev = max((e["ev"] for e in scored["edges"] if e["ev"] is not None),
                       default=None)
         # Points only. A moneyline gap is measured in probability and mixing the
@@ -360,12 +435,74 @@ def main():
             "fair_total": scored["fair_total"],
             "edges": scored["edges"],
             "review": scored["review"],
+            "injuries": {
+                "home": injury_map.get(home_school, [])[:12],
+                "away": injury_map.get(away_school, [])[:12],
+                "home_summary": injuries.summarise(injury_map.get(home_school)),
+                "away_summary": injuries.summarise(injury_map.get(away_school)),
+            },
+            "movement": move,
+            "opener": bool(move.get("opener")),
             "best_ev": best_ev,
             "best_gap": best_gap,
             "last_update": posted["last_update"],
         })
 
-    rows.sort(key=lambda r: (-(r["best_ev"] or -9), r["kickoff"] or ""))
+    # Explanations are built after scoring so they can use league-wide ranks.
+    log("Writing explanations")
+    ranks = writeup.build_ranks(table_now)
+    directions = writeup.resolve_directions(table_now)
+
+    for row in rows:
+        home_row = table_now[row["home"]]
+        away_row = table_now[row["away"]]
+        for edge in row["edges"]:
+            try:
+                edge["writeup"] = writeup.build_writeup(
+                    row, home_row, away_row, edge, model, ranks, directions)
+            except Exception as exc:  # noqa: BLE001
+                edge["writeup"] = None
+                log("  writeup failed for %s %s: %s"
+                    % (row["home"], edge["market"], exc))
+            try:
+                posted_number = (row["posted"]["spread"] if edge["market"] != "total"
+                                 else row["posted"]["total"])
+                if posted_number is not None and edge.get("fair") is not None \
+                        and edge["market"] in ("spread", "total"):
+                    edge["key_mass"] = keynumbers.mass_between(
+                        keys, posted_number, edge["fair"], posted_number,
+                        market=edge["market"])
+            except Exception:  # noqa: BLE001
+                edge["key_mass"] = None
+            try:
+                drivers = (edge.get("writeup") or {}).get("drivers") or []
+                backing = row["home"] if edge.get("side") == "home" else row["away"]
+                fading = row["away"] if edge.get("side") == "home" else row["home"]
+                notes = profiles.stylistic_note(backing, fading, style_pcts) \
+                    if edge.get("side") in ("home", "away") else []
+                edge["style_notes"] = notes
+                edge["confidence"] = confidence.score_edge(
+                    row, edge, home_row, away_row, model, drivers,
+                    row.get("movement") or {}, report, notes)
+            except Exception as exc:  # noqa: BLE001
+                edge["confidence"] = None
+                log("  confidence failed for %s %s: %s"
+                    % (row["home"], edge["market"], exc))
+
+    for row in rows:
+        scores = [(e.get("confidence") or {}).get("score") for e in row["edges"]]
+        scores = [s for s in scores if s is not None]
+        row["best_confidence"] = max(scores) if scores else None
+
+    rows.sort(key=lambda r: (-(r["best_confidence"] or -1),
+                             -(r["best_ev"] or -9), r["kickoff"] or ""))
+
+    captured = history.finalise(line_history, closings, live_ids)
+    live_kept, close_kept = history.save(line_history, closings)
+    usable = sum(1 for e in closings.values() if not e.get("stale"))
+    log("  captured %d new closing lines, tracking %d live, %d stored (%d near "
+        "enough to kickoff to use for CLV)"
+        % (captured, live_kept, close_kept, usable))
 
     if unmatched:
         log("  unmatched team names (add to names.ALIASES): %s"
@@ -381,6 +518,10 @@ def main():
         "model": {
             "margin_sigma": round(model["margin_sigma"], 2),
             "total_sigma": round(model["total_sigma"], 2) if model["total_sigma"] else None,
+            "in_sample_margin_sigma": round(model["in_sample_margin_sigma"], 2),
+            "in_sample_total_sigma": round(model["in_sample_total_sigma"], 2)
+                                     if model["in_sample_total_sigma"] else None,
+            "sigma_source": model["sigma_source"],
             "margin_n": model["margin_n"],
             "total_n": model["total_n"],
             "home_edge": round(hfa, 2),
@@ -391,6 +532,33 @@ def main():
             "cfbd_calls_this_run": cfbd_client.call_count,
         },
         "injury_links": INJURY_LINKS,
+        "injury_feed": dict(injuries.status),
+        "tiers": confidence.summarise_board(rows),
+        "backtest": report,
+        "key_numbers": {k: v for k, v in keys.items() if k != "margins" and k != "totals"},
+        "closings": {
+            game_id: {
+                "label": entry.get("label"),
+                "spread": entry.get("spread"),
+                "total": entry.get("total"),
+                "home_ml": entry.get("home_ml"),
+                "away_ml": entry.get("away_ml"),
+                "stale": bool(entry.get("stale")),
+                "hours_before_kickoff": entry.get("hours_before_kickoff"),
+            }
+            for game_id, entry in closings.items()
+        },
+        "closing_quality": {
+            "captured": len(closings),
+            "usable": sum(1 for e in closings.values() if not e.get("stale")),
+            "stale": sum(1 for e in closings.values() if e.get("stale")),
+        },
+        "parlays": parlays.build(rows),
+        "profiles": {
+            school: profiles.describe(school, table_now, style_pcts)
+            for school in {r["home"] for r in rows} | {r["away"] for r in rows}
+            if profiles.describe(school, table_now, style_pcts)
+        },
         "unmatched": sorted(unmatched),
         "games": rows,
         "teams": {k: v for k, v in table_now.items()

@@ -154,6 +154,25 @@ def calibration_sp(year):
     )
 
 
+def historical_lines(year, season_type="regular"):
+    """CFBD's archive of closing lines. Used only by the backtest."""
+    return _get(
+        "/lines",
+        {"year": year, "seasonType": season_type},
+        cache_as="lines_%s" % year,
+        max_age_days=365,
+    )
+
+
+def season_advanced_cached(year):
+    return _get(
+        "/stats/season/advanced",
+        {"year": year, "excludeGarbageTime": "true"},
+        cache_as="advanced_%s" % year,
+        max_age_days=365,
+    )
+
+
 def media(year, season_type="regular"):
     """Broadcast outlet per game. Drives the televised filter for G5 games."""
     return _get(

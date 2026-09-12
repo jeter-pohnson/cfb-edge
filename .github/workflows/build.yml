@@ -1,11 +1,17 @@
 name: Build board
 
 on:
-  schedule:
-    # Times are UTC. This is 8am, 2pm and 7pm Eastern, Tuesday through Saturday.
-    # Fifteen runs a week costs about 195 of the 500 monthly odds credits.
-    - cron: "0 12,18,23 * * 2,3,4,5,6"
+  # Manual only. Every run costs 3 of the 500 monthly odds credits, and you
+  # asked to control that yourself, so nothing fires on a timer.
   workflow_dispatch:
+
+  # If you ever want the closing lines captured accurately without remembering
+  # to press the button, delete the leading # from the three lines below. That
+  # is 4 runs a week, 12 credits a month, and it is the only thing a schedule
+  # buys you that a manual run cannot.
+  # schedule:
+  #   # Saturday 11am, 3pm, 7pm and 11pm Eastern, in UTC.
+  #   - cron: "0 15,19,23,3 * * 6,0"
 
 permissions:
   contents: write

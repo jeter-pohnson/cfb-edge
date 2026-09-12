@@ -47,10 +47,20 @@ def fake_advanced(year):
     return [{
         "team": n,
         "offense": {"ppa": round(0.16 + TRUE[n] * 0.006, 4), "plays": 820, "drives": 132,
-                    "successRate": 0.44, "explosiveness": 1.24},
+                    "successRate": round(0.40 + TRUE[n] * 0.004, 4),
+                    "explosiveness": round(1.10 + TRUE[n] * 0.012, 3),
+                    "lineYards": round(2.6 + TRUE[n] * 0.02, 3),
+                    "rushingPlays": {"rate": round(0.40 + (hash(n) % 25) / 100.0, 3),
+                                     "ppa": round(0.10 + TRUE[n] * 0.004, 4)},
+                    "passingPlays": {"rate": round(0.60 - (hash(n) % 25) / 100.0, 3),
+                                     "ppa": round(0.20 + TRUE[n] * 0.005, 4)}},
         "defense": {"ppa": round(0.12 - TRUE[n] * 0.005, 4), "plays": 810, "drives": 130,
-                    "successRate": 0.40, "explosiveness": 1.18,
-                    "havoc": {"total": 0.17}},
+                    "successRate": round(0.44 - TRUE[n] * 0.003, 4),
+                    "explosiveness": round(1.30 - TRUE[n] * 0.010, 3),
+                    "stuffRate": round(0.16 + TRUE[n] * 0.003, 4),
+                    "havoc": {"total": round(0.14 + TRUE[n] * 0.002, 4)},
+                    "rushingPlays": {"ppa": round(0.10 - TRUE[n] * 0.003, 4)},
+                    "passingPlays": {"ppa": round(0.16 - TRUE[n] * 0.004, 4)}},
     } for n, _ in SCHOOLS]
 
 
@@ -59,16 +69,17 @@ def fake_returning(year):
 
 
 def _synth_games(year, completed):
+    rng = random.Random(year * 7 + (1 if completed else 0))
     out, gid = [], year * 1000
-    for _ in range(240):
-        home, away = random.sample([s for s, _ in SCHOOLS], 2)
+    for _ in range(850):
+        home, away = rng.sample([s for s, _ in SCHOOLS], 2)
         gid += 1
-        margin = TRUE[home] - TRUE[away] + 2.4 + random.gauss(0, 13.5)
-        total = 52 + (TRUE[home] + TRUE[away]) * 0.12 + random.gauss(0, 11)
+        margin = TRUE[home] - TRUE[away] + 2.4 + rng.gauss(0, 13.5)
+        total = 52 + (TRUE[home] + TRUE[away]) * 0.12 + rng.gauss(0, 11)
         home_pts = max(0, round((total + margin) / 2))
         away_pts = max(0, round((total - margin) / 2))
         out.append({
-            "id": gid, "week": 3, "homeTeam": home, "awayTeam": away,
+            "id": gid, "week": (gid % 14) + 1, "homeTeam": home, "awayTeam": away,
             "neutralSite": False, "conferenceGame": True, "completed": completed,
             "homePoints": home_pts if completed else None,
             "awayPoints": away_pts if completed else None,
@@ -82,6 +93,20 @@ def fake_games(year, season_type="regular"):
 
 def fake_calibration_games(year):
     return _synth_games(year, completed=True)
+
+
+def fake_lines(year, season_type="regular"):
+    rng = random.Random(year * 31)
+    out = []
+    for game in _synth_games(year, completed=True):
+        edge = TRUE[game["homeTeam"]] - TRUE[game["awayTeam"]] + 2.4
+        out.append({
+            "homeTeam": game["homeTeam"], "awayTeam": game["awayTeam"],
+            "lines": [{"provider": "DraftKings",
+                       "spread": -round((edge + rng.gauss(0, 2.2)) * 2) / 2,
+                       "overUnder": round((52 + rng.gauss(0, 5)) * 2) / 2}],
+        })
+    return out
 
 
 def fake_media(year, season_type="regular"):
@@ -149,6 +174,7 @@ cfbd_client.returning_production = fake_returning
 cfbd_client.games = fake_games
 cfbd_client.calibration_games = fake_calibration_games
 cfbd_client.media = fake_media
+cfbd_client.historical_lines = fake_lines
 odds_client.fetch_board = fake_board
 
 _original_write = build.write_output
