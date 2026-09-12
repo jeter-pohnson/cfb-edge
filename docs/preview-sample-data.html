@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CFB Edge Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..800;1,62..125,400..700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#E8E9E4;
+  --panel:#F5F6F2;
+  --ink:#14171A;
+  --muted:#626A6E;
+  --rule:#C4C8C0;
+  --rule-strong:#9AA096;
+  --play:#1E5945;
+  --fade:#8A3324;
+  --strict:#2D3A6B;
+  --sp:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Archivo',system-ui,sans-serif;
+  font-variant-numeric:tabular-nums;
+  font-size:15px;
+  line-height:1.45;
+  padding:0 0 80px;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+/* ---------------------------------------------------------- masthead */
+.masthead{border-bottom:2px solid var(--ink);padding:26px 0 14px;margin-bottom:2px}
+.masthead h1{
+  font-size:clamp(30px,5vw,46px);
+  font-weight:800;
+  font-stretch:112%;
+  letter-spacing:-.022em;
+  line-height:.98;
+}
+.masthead .sub{color:var(--muted);font-size:14px;margin-top:6px}
+.meta{
+  display:flex;flex-wrap:wrap;gap:0 22px;
+  border-bottom:1px solid var(--rule);
+  padding:9px 0;font-size:12.5px;color:var(--muted);
+}
+.meta b{color:var(--ink);font-weight:600}
+
+/* ---------------------------------------------------------- tabs */
+.tabs{display:flex;gap:2px;margin:18px 0 0;border-bottom:1px solid var(--rule-strong)}
+.tab{
+  appearance:none;border:1px solid var(--rule);border-bottom:none;background:transparent;
+  font:inherit;font-weight:600;font-size:14px;color:var(--muted);
+  padding:9px 16px;cursor:pointer;border-radius:3px 3px 0 0;
+}
+.tab[aria-selected="true"]{background:var(--panel);color:var(--ink);border-color:var(--rule-strong)}
+.tab:focus-visible{outline:2px solid var(--strict);outline-offset:2px}
+.view{display:none;padding-top:22px}
+.view.on{display:block}
+
+/* ---------------------------------------------------------- plays */
+.play{
+  display:grid;
+  grid-template-columns:92px 1fr auto;
+  gap:0 18px;
+  border-bottom:1px solid var(--rule);
+  padding:16px 0;
+  align-items:start;
+}
+.play:first-child{border-top:1px solid var(--rule-strong)}
+.gapcell{text-align:right;padding-top:2px}
+.gapnum{
+  font-size:34px;font-weight:700;font-stretch:88%;letter-spacing:-.03em;
+  line-height:1;display:block;
+}
+.gapunit{font-size:11px;color:var(--muted);display:block;margin-top:3px}
+.playbody h3{font-size:17px;font-weight:600;letter-spacing:-.01em;line-height:1.2}
+.bet{font-size:20px;font-weight:700;font-stretch:104%;margin-top:5px;color:var(--play)}
+.bet .price{font-size:14px;font-weight:500;color:var(--muted);margin-left:6px}
+.why{font-size:13.5px;color:var(--muted);margin-top:6px;max-width:62ch}
+.why b{color:var(--ink);font-weight:600}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.tag{
+  font-size:11.5px;font-weight:600;padding:2px 8px;border:1px solid var(--rule-strong);
+  border-radius:2px;color:var(--muted);
+}
+.tag.s{border-color:var(--strict);color:var(--strict)}
+.tag.k{border-color:var(--fade);color:var(--fade)}
+.numcell{text-align:right;min-width:112px}
+.ev{font-size:19px;font-weight:700;line-height:1.1}
+.ev.pos{color:var(--play)}
+.ev.neg{color:var(--fade)}
+.evlabel{font-size:11px;color:var(--muted);margin-top:2px}
+.stake{font-size:12.5px;color:var(--muted);margin-top:8px}
+.acts{display:flex;gap:6px;margin-top:9px;justify-content:flex-end;flex-wrap:wrap}
+
+button.mini,a.mini{
+  appearance:none;font:inherit;font-size:12px;font-weight:600;
+  padding:5px 10px;border:1px solid var(--rule-strong);background:var(--panel);
+  color:var(--ink);border-radius:2px;cursor:pointer;text-decoration:none;display:inline-block;
+}
+button.mini:hover,a.mini:hover{background:#fff}
+button.mini:focus-visible,a.mini:focus-visible{outline:2px solid var(--strict);outline-offset:2px}
+button.mini.on{background:var(--play);border-color:var(--play);color:#fff}
+
+/* ---------------------------------------------------------- table */
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.controls input,.controls select{
+  font:inherit;font-size:13px;padding:6px 9px;border:1px solid var(--rule-strong);
+  background:var(--panel);border-radius:2px;color:var(--ink);
+}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+thead th{
+  text-align:right;font-weight:600;font-size:12px;color:var(--muted);
+  padding:7px 8px;border-bottom:1px solid var(--rule-strong);cursor:pointer;
+  white-space:nowrap;
+}
+thead th:first-child,tbody td:first-child{text-align:left}
+thead th[data-dir]{color:var(--ink)}
+tbody td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--rule);vertical-align:top}
+tbody tr:hover{background:var(--panel)}
+.matchup{font-weight:600;line-height:1.25}
+.matchup small{display:block;font-weight:400;color:var(--muted);font-size:11.5px;margin-top:2px}
+.flagged{color:var(--play);font-weight:700}
+.noted{color:var(--fade);font-weight:600}
+
+/* ---------------------------------------------------------- notes */
+.notebox{background:var(--panel);border:1px solid var(--rule-strong);padding:14px;margin-top:10px}
+.notebox textarea{
+  width:100%;min-height:76px;font:inherit;font-size:13.5px;padding:8px;
+  border:1px solid var(--rule);background:#fff;color:var(--ink);resize:vertical;
+}
+.notebox .row{display:flex;gap:8px;align-items:center;margin-top:9px;flex-wrap:wrap}
+.links{font-size:12.5px;color:var(--muted);margin-top:10px}
+.links a{color:var(--strict)}
+
+/* ---------------------------------------------------------- log */
+.summary{display:flex;flex-wrap:wrap;gap:30px;border-bottom:1px solid var(--rule-strong);padding-bottom:14px;margin-bottom:16px}
+.stat .v{font-size:27px;font-weight:700;font-stretch:92%;line-height:1}
+.stat .l{font-size:12px;color:var(--muted);margin-top:3px}
+.empty{color:var(--muted);font-size:14px;padding:26px 0;max-width:58ch}
+.warn{border-left:3px solid var(--fade);padding:10px 0 10px 12px;margin:16px 0;font-size:13px;color:var(--muted)}
+
+@media (max-width:720px){
+  .play{grid-template-columns:64px 1fr;gap:0 12px}
+  .gapnum{font-size:26px}
+  .numcell{grid-column:2;text-align:left;margin-top:10px;min-width:0}
+  .acts{justify-content:flex-start}
+  .hide-sm{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="samplebar"></div>
+
+  <header class="masthead">
+    <h1>CFB Edge Board</h1>
+    <p class="sub" id="sub"></p>
+  </header>
+
+  <div class="meta" id="meta"></div>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t-plays" aria-selected="true" onclick="showView('plays')">Plays</button>
+    <button class="tab" role="tab" id="t-board" aria-selected="false" onclick="showView('board')">Full board</button>
+    <button class="tab" role="tab" id="t-log" aria-selected="false" onclick="showView('log')">Bet log</button>
+  </nav>
+
+  <section class="view on" id="v-plays"></section>
+
+  <section class="view" id="v-board">
+    <div class="controls">
+      <input id="q" type="search" placeholder="Filter by team" oninput="renderBoard()">
+      <select id="slate" onchange="renderBoard()">
+        <option value="all">All games</option>
+        <option value="power">Power 4 only</option>
+        <option value="g5">Group of 5 only</option>
+        <option value="flagged">Flagged only</option>
+      </select>
+    </div>
+    <div id="boardwrap"></div>
+  </section>
+
+  <section class="view" id="v-log"></section>
+
+</div>
+
+<script id="board-data" type="application/json">{"generated_at":"2026-09-11T13:40:36.544962+00:00","season":2026,"week":3,"unit":20,"thresholds":{"flag":2.0,"strict":3.0},"model":{"margin_sigma":12.87,"total_sigma":10.76,"margin_n":360,"total_n":360,"home_edge":2.19},"quota":{"odds_remaining":"488","odds_used":"12","cfbd_calls_this_run":0},"injury_links":[{"label":"CBS Sports injury report","url":"https://www.cbssports.com/college-football/injuries/"},{"label":"Covers NCAAF injuries","url":"https://www.covers.com/sport/football/ncaaf/injuries"},{"label":"CFBDepth depth charts","url":"https://www.cfbdepth.com/injury-report/"}],"unmatched":[],"games":[{"id":"evt2026043","home":"Memphis","away":"Ohio State","home_conf":"American Athletic","away_conf":"Big Ten","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":-9.0,"spread_price":-110,"total":37.5,"over_price":-110,"under_price":-110,"home_ml":-296,"away_ml":296},"fair_spread":-4.42,"fair_total":53.42,"edges":[{"market":"spread","side":"away","team":"Ohio State","line":"+9","price":-110,"gap":4.58,"prob":0.6245569052932671,"push":0.029095057851087236,"ev":0.22143096795641537,"strict":true,"keys":[7],"fair":-4.42},{"market":"total","side":"over","team":null,"line":"o37.5","price":-110,"gap":15.92,"prob":0.9305859016610278,"push":0.0,"ev":0.7765730849892349,"strict":true,"keys":[],"fair":53.42},{"market":"moneyline","side":"away","team":"Ohio State","line":"+296","price":296,"gap":11.3,"prob":0.3657180372114839,"push":0.0,"ev":0.44824342735747624,"strict":true,"keys":[],"fair":173}],"review":[],"best_ev":0.7765730849892349,"best_gap":15.92,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026009","home":"Michigan","away":"Ohio State","home_conf":"Big Ten","away_conf":"Big Ten","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"FOX","slate":"power","posted":{"spread":11.0,"spread_price":-110,"total":55.0,"over_price":-110,"under_price":-110,"home_ml":382,"away_ml":-382},"fair_spread":4.92,"fair_total":53.87,"edges":[{"market":"spread","side":"home","team":"Michigan","line":"+11","price":-110,"gap":6.08,"prob":0.6676570179424208,"push":0.02773065160341176,"ev":0.3023485949480333,"strict":true,"keys":[7,10],"fair":4.92},{"market":"moneyline","side":"home","team":"Michigan","line":"+382","price":382,"gap":14.4,"prob":0.35097480266995196,"push":0.0,"ev":0.6916985488691685,"strict":true,"keys":[],"fair":185}],"review":[],"best_ev":0.6916985488691685,"best_gap":6.08,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026010","home":"Michigan","away":"Memphis","home_conf":"Big Ten","away_conf":"American Athletic","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":6.0,"spread_price":-110,"total":43.5,"over_price":-110,"under_price":-110,"home_ml":205,"away_ml":-205},"fair_spread":7.6,"fair_total":54.45,"edges":[{"market":"total","side":"over","team":null,"line":"o43.5","price":-110,"gap":10.95,"prob":0.8455206765741476,"push":0.0,"ev":0.6141758370961,"strict":true,"keys":[],"fair":54.45},{"market":"moneyline","side":"away","team":"Memphis","line":"-205","price":-205,"gap":5.0,"prob":0.722568594085413,"push":0.0,"ev":0.07504107900512658,"strict":true,"keys":[],"fair":-260}],"review":[],"best_ev":0.6141758370961,"best_gap":10.95,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026015","home":"Oregon","away":"Ole Miss","home_conf":"Big Ten","away_conf":"SEC","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":0.5,"spread_price":-110,"total":39.0,"over_price":-110,"under_price":-110,"home_ml":106,"away_ml":-106},"fair_spread":0.14,"fair_total":49.93,"edges":[{"market":"total","side":"over","team":null,"line":"o39","price":-110,"gap":10.93,"prob":0.8337733522056161,"push":0.02213959522561504,"ev":0.6138887221636093,"strict":true,"keys":[],"fair":49.93}],"review":[],"best_ev":0.6138887221636093,"best_gap":10.93,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026058","home":"Kansas State","away":"Texas","home_conf":"Big 12","away_conf":"SEC","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":12.0,"spread_price":-110,"total":45.5,"over_price":-110,"under_price":-110,"home_ml":435,"away_ml":-435},"fair_spread":7.68,"fair_total":55.24,"edges":[{"market":"spread","side":"home","team":"Kansas State","line":"+12","price":-110,"gap":4.32,"prob":0.6166238869256772,"push":0.029305503742101724,"ev":0.2064965606002126,"strict":true,"keys":[10],"fair":7.68},{"market":"total","side":"over","team":null,"line":"o45.5","price":-110,"gap":9.74,"prob":0.8173062003634045,"push":0.0,"ev":0.5603118370574086,"strict":true,"keys":[],"fair":55.24},{"market":"moneyline","side":"home","team":"Kansas State","line":"+435","price":435,"gap":8.8,"prob":0.2751719869732665,"push":0.0,"ev":0.47217013030697563,"strict":true,"keys":[],"fair":263}],"review":[],"best_ev":0.5603118370574086,"best_gap":9.74,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026048","home":"Ohio State","away":"Ohio","home_conf":"Big Ten","away_conf":"Mid-American","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":-5.5,"spread_price":-110,"total":44.5,"over_price":-110,"under_price":-110,"home_ml":-193,"away_ml":193},"fair_spread":-6.52,"fair_total":53.69,"edges":[{"market":"total","side":"over","team":null,"line":"o44.5","price":-110,"gap":9.19,"prob":0.8034067758357066,"push":0.0,"ev":0.5337765720499854,"strict":true,"keys":[],"fair":53.69},{"market":"moneyline","side":"home","team":"Ohio State","line":"-193","price":-193,"gap":3.5,"prob":0.6938890874535617,"push":0.0,"ev":0.05341711204089933,"strict":false,"keys":[],"fair":-227}],"review":[],"best_ev":0.5337765720499854,"best_gap":9.19,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026042","home":"Notre Dame","away":"Ole Miss","home_conf":"FBS Independents","away_conf":"SEC","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"ESPN","slate":"power","posted":{"spread":-28.5,"spread_price":-110,"total":46.5,"over_price":-110,"under_price":-110,"home_ml":-3233,"away_ml":3233},"fair_spread":-33.35,"fair_total":54.61,"edges":[{"market":"spread","side":"home","team":"Notre Dame","line":"-28.5","price":-110,"gap":4.85,"prob":0.6470106277962793,"push":0.0,"ev":0.23520210761107863,"strict":true,"keys":[],"fair":-33.35},{"market":"total","side":"over","team":null,"line":"o46.5","price":-110,"gap":8.11,"prob":0.7746016213752531,"push":0.0,"ev":0.4787849135345741,"strict":true,"keys":[],"fair":54.61}],"review":[],"best_ev":0.4787849135345741,"best_gap":8.11,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026034","home":"Oregon","away":"Miami (OH)","home_conf":"Big Ten","away_conf":"Mid-American","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":22.0,"spread_price":-110,"total":59.0,"over_price":-110,"under_price":-110,"home_ml":1838,"away_ml":-1838},"fair_spread":22.9,"fair_total":51.0,"edges":[{"market":"total","side":"under","team":null,"line":"u59","price":-110,"gap":8.0,"prob":0.7571596495569723,"push":0.02811926229284034,"ev":0.47360586599251475,"strict":true,"keys":[],"fair":51.0}],"review":[],"best_ev":0.47360586599251475,"best_gap":8.0,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026056","home":"Georgia","away":"Michigan","home_conf":"SEC","away_conf":"Big Ten","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"FOX","slate":"power","posted":{"spread":4.5,"spread_price":-110,"total":43.5,"over_price":-110,"under_price":-110,"home_ml":171,"away_ml":-171},"fair_spread":8.66,"fair_total":50.38,"edges":[{"market":"spread","side":"away","team":"Michigan","line":"-4.5","price":-110,"gap":4.16,"prob":0.6267839384331433,"push":0.0,"ev":0.19658751882690984,"strict":true,"keys":[7],"fair":8.66},{"market":"total","side":"over","team":null,"line":"o43.5","price":-110,"gap":6.88,"prob":0.7387490601380962,"push":0.0,"ev":0.4103391148090927,"strict":true,"keys":[],"fair":50.38},{"market":"moneyline","side":"away","team":"Michigan","line":"-171","price":-171,"gap":11.9,"prob":0.7495654408898413,"push":0.0,"ev":0.1879078039833158,"strict":true,"keys":[],"fair":-299}],"review":[],"best_ev":0.4103391148090927,"best_gap":6.88,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026032","home":"Texas","away":"Oregon","home_conf":"SEC","away_conf":"Big Ten","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"ESPN+","slate":"power","posted":{"spread":-25.5,"spread_price":-110,"total":60.0,"over_price":-110,"under_price":-110,"home_ml":-3233,"away_ml":3233},"fair_spread":-29.65,"fair_total":53.21,"edges":[{"market":"spread","side":"home","team":"Texas","line":"-25.5","price":-110,"gap":4.15,"prob":0.6264120502649673,"push":0.0,"ev":0.19587755050584654,"strict":true,"keys":[],"fair":-29.65},{"market":"total","side":"under","team":null,"line":"u60","price":-110,"gap":6.79,"prob":0.7205052121884772,"push":0.03038521193574173,"ev":0.40589516247738,"strict":true,"keys":[],"fair":53.21}],"review":[],"best_ev":0.40589516247738,"best_gap":6.79,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026014","home":"NC State","away":"Tulane","home_conf":"ACC","away_conf":"American Athletic","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":21.5,"spread_price":-110,"total":46.5,"over_price":-110,"under_price":-110,"home_ml":1698,"away_ml":-1698},"fair_spread":21.57,"fair_total":52.65,"edges":[{"market":"total","side":"over","team":null,"line":"o46.5","price":-110,"gap":6.15,"prob":0.7162121339615349,"push":0.0,"ev":0.3673140739265667,"strict":true,"keys":[],"fair":52.65}],"review":[],"best_ev":0.3673140739265667,"best_gap":6.15,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026057","home":"Clemson","away":"Texas","home_conf":"ACC","away_conf":"SEC","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"ESPN+","slate":"power","posted":{"spread":26.0,"spread_price":-110,"total":47.5,"over_price":-110,"under_price":-110,"home_ml":3233,"away_ml":-3233},"fair_spread":22.88,"fair_total":53.51,"edges":[{"market":"spread","side":"home","team":"Clemson","line":"+26","price":-110,"gap":3.12,"prob":0.5805616914528996,"push":0.030105544168299136,"ev":0.13845059148747108,"strict":true,"keys":[],"fair":22.88},{"market":"total","side":"over","team":null,"line":"o47.5","price":-110,"gap":6.01,"prob":0.7117686834396582,"push":0.0,"ev":0.35883112293025643,"strict":true,"keys":[],"fair":53.51}],"review":[],"best_ev":0.35883112293025643,"best_gap":6.01,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026025","home":"NC State","away":"Miami (OH)","home_conf":"ACC","away_conf":"Mid-American","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":5.5,"spread_price":-110,"total":47.0,"over_price":-110,"under_price":-110,"home_ml":193,"away_ml":-193},"fair_spread":3.59,"fair_total":52.63,"edges":[{"market":"total","side":"over","team":null,"line":"o47","price":-110,"gap":5.63,"prob":0.6832556552883288,"push":0.03232875605183083,"ev":0.3367259161477312,"strict":true,"keys":[],"fair":52.63},{"market":"moneyline","side":"home","team":"NC State","line":"+193","price":193,"gap":4.9,"prob":0.3902347207300976,"push":0.0,"ev":0.14338773173918584,"strict":false,"keys":[],"fair":156}],"review":[],"best_ev":0.3367259161477312,"best_gap":5.63,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026029","home":"Tulane","away":"Michigan","home_conf":"American Athletic","away_conf":"Big Ten","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":-29.0,"spread_price":-110,"total":52.5,"over_price":-110,"under_price":-110,"home_ml":-3233,"away_ml":3233},"fair_spread":-28.95,"fair_total":58.03,"edges":[{"market":"total","side":"over","team":null,"line":"o52.5","price":-110,"gap":5.53,"prob":0.6962797613893184,"push":0.0,"ev":0.32926136265233497,"strict":true,"keys":[],"fair":58.03}],"review":[],"best_ev":0.32926136265233497,"best_gap":5.53,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026004","home":"Ohio State","away":"Miami","home_conf":"Big Ten","away_conf":"ACC","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"ESPN","slate":"power","posted":{"spread":-23.0,"spread_price":-110,"total":47.5,"over_price":-110,"under_price":-110,"home_ml":-2162,"away_ml":2162},"fair_spread":-21.32,"fair_total":52.93,"edges":[{"market":"total","side":"over","team":null,"line":"o47.5","price":-110,"gap":5.43,"prob":0.6932630635218612,"push":0.0,"ev":0.3235022121780986,"strict":true,"keys":[],"fair":52.93}],"review":[],"best_ev":0.3235022121780986,"best_gap":5.43,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026033","home":"Penn State","away":"Ole Miss","home_conf":"Big Ten","away_conf":"SEC","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"CBSSN","slate":"power","posted":{"spread":-24.0,"spread_price":-110,"total":48.0,"over_price":-110,"under_price":-110,"home_ml":-2551,"away_ml":2551},"fair_spread":-21.19,"fair_total":53.39,"edges":[{"market":"spread","side":"away","team":"Ole Miss","line":"+24","price":-110,"gap":2.81,"prob":0.5712061378143791,"push":0.030271483356945628,"ev":0.12075592827530579,"strict":false,"keys":[],"fair":-21.19},{"market":"total","side":"over","team":null,"line":"o48","price":-110,"gap":5.39,"prob":0.6751291507728536,"push":0.03270639334805753,"ev":0.3215893175507781,"strict":true,"keys":[],"fair":53.39}],"review":[],"best_ev":0.3215893175507781,"best_gap":5.39,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026027","home":"Kansas State","away":"Boise State","home_conf":"Big 12","away_conf":"Mountain West","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":-18.0,"spread_price":-110,"total":57.5,"over_price":-110,"under_price":-110,"home_ml":-996,"away_ml":996},"fair_spread":-17.11,"fair_total":52.22,"edges":[{"market":"total","side":"under","team":null,"line":"u57.5","price":-110,"gap":5.28,"prob":0.6881533517048835,"push":0.0,"ev":0.3137473078002321,"strict":true,"keys":[],"fair":52.22}],"review":[],"best_ev":0.3137473078002321,"best_gap":5.28,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026035","home":"Georgia","away":"Notre Dame","home_conf":"SEC","away_conf":"FBS Independents","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":22.0,"spread_price":-110,"total":50.5,"over_price":-110,"under_price":-110,"home_ml":1838,"away_ml":-1838},"fair_spread":28.27,"fair_total":52.07,"edges":[{"market":"spread","side":"away","team":"Notre Dame","line":"-22","price":-110,"gap":6.27,"prob":0.6731637576806022,"push":0.027529019425052037,"ev":0.3126598295425653,"strict":true,"keys":[],"fair":28.27},{"market":"moneyline","side":"away","team":"Notre Dame","line":"-1838","price":-1838,"gap":3.8,"prob":0.9860091676697165,"push":0.0,"ev":0.03965493304891758,"strict":false,"keys":[],"fair":-7048}],"review":[],"best_ev":0.3126598295425653,"best_gap":6.27,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026023","home":"Miami","away":"NC State","home_conf":"ACC","away_conf":"ACC","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"CBSSN","slate":"power","posted":{"spread":14.0,"spread_price":-110,"total":45.5,"over_price":-110,"under_price":-110,"home_ml":567,"away_ml":-567},"fair_spread":13.87,"fair_total":50.27,"edges":[{"market":"total","side":"over","team":null,"line":"o45.5","price":-110,"gap":4.77,"prob":0.6713066563943684,"push":0.0,"ev":0.2815854349347032,"strict":true,"keys":[],"fair":50.27}],"review":[],"best_ev":0.2815854349347032,"best_gap":4.77,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026026","home":"Alabama","away":"Clemson","home_conf":"SEC","away_conf":"ACC","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"ESPN","slate":"power","posted":{"spread":-11.5,"spread_price":-110,"total":55.5,"over_price":-110,"under_price":-110,"home_ml":-407,"away_ml":407},"fair_spread":-14.2,"fair_total":50.74,"edges":[{"market":"spread","side":"home","team":"Alabama","line":"-11.5","price":-110,"gap":2.7,"prob":0.5830578686323362,"push":0.0,"ev":0.11311047647991457,"strict":false,"keys":[14],"fair":-14.2},{"market":"total","side":"under","team":null,"line":"u55.5","price":-110,"gap":4.76,"prob":0.670881958552081,"push":0.0,"ev":0.28077464814488184,"strict":true,"keys":[],"fair":50.74},{"market":"moneyline","side":"home","team":"Alabama","line":"-407","price":-407,"gap":6.2,"prob":0.8651151462576023,"push":0.0,"ev":0.07767415025209923,"strict":true,"keys":[],"fair":-641}],"review":[],"best_ev":0.28077464814488184,"best_gap":4.76,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026006","home":"UNLV","away":"Alabama","home_conf":"Mountain West","away_conf":"SEC","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"CBSSN","slate":"power","posted":{"spread":-0.5,"spread_price":-110,"total":48.5,"over_price":-110,"under_price":-110,"home_ml":-106,"away_ml":106},"fair_spread":3.34,"fair_total":53.12,"edges":[{"market":"spread","side":"away","team":"Alabama","line":"+0.5","price":-110,"gap":3.84,"prob":0.6172871487549612,"push":0.0,"ev":0.178457283986744,"strict":true,"keys":[3],"fair":3.34},{"market":"total","side":"over","team":null,"line":"o48.5","price":-110,"gap":4.62,"prob":0.6661999804452994,"push":0.0,"ev":0.2718363263046625,"strict":true,"keys":[],"fair":53.12},{"market":"moneyline","side":"away","team":"Alabama","line":"+106","price":106,"gap":11.7,"prob":0.6023751113727338,"push":0.0,"ev":0.2408927294278317,"strict":true,"keys":[],"fair":-151}],"review":[],"best_ev":0.2718363263046625,"best_gap":4.62,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026020","home":"UNLV","away":"Ohio","home_conf":"Mountain West","away_conf":"Mid-American","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"g5-market","posted":{"spread":10.0,"spread_price":-110,"total":58.0,"over_price":-110,"under_price":-110,"home_ml":336,"away_ml":-336},"fair_spread":7.82,"fair_total":53.74,"edges":[{"market":"spread","side":"home","team":"UNLV","line":"+10","price":-110,"gap":2.18,"prob":0.5519622149097424,"push":0.030559281078915868,"ev":0.08430532772478766,"strict":false,"keys":[],"fair":7.82},{"market":"total","side":"under","team":null,"line":"u58","price":-110,"gap":4.26,"prob":0.6365564158618138,"push":0.03427884057324171,"ev":0.24952290721852255,"strict":true,"keys":[],"fair":53.74},{"market":"moneyline","side":"home","team":"UNLV","line":"+336","price":336,"gap":4.2,"prob":0.2716619358207932,"push":0.0,"ev":0.1844460401786583,"strict":false,"keys":[],"fair":268}],"review":[],"best_ev":0.24952290721852255,"best_gap":4.26,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026030","home":"Kansas State","away":"Ohio","home_conf":"Big 12","away_conf":"Mid-American","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"ESPN","slate":"power","posted":{"spread":-3.5,"spread_price":-110,"total":50.0,"over_price":-110,"under_price":-110,"home_ml":-151,"away_ml":151},"fair_spread":-1.95,"fair_total":54.25,"edges":[{"market":"total","side":"over","team":null,"line":"o50","price":-110,"gap":4.25,"prob":0.6361448569599942,"push":0.0342936845189849,"ev":0.24875204780624655,"strict":true,"keys":[],"fair":54.25},{"market":"moneyline","side":"away","team":"Ohio","line":"+151","price":151,"gap":4.1,"prob":0.43978876406880374,"push":0.0,"ev":0.10386979781269734,"strict":false,"keys":[],"fair":127}],"review":[],"best_ev":0.24875204780624655,"best_gap":4.25,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026047","home":"Miami","away":"Texas Tech","home_conf":"ACC","away_conf":"Big 12","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"ESPN","slate":"power","posted":{"spread":-2.0,"spread_price":-110,"total":53.5,"over_price":-110,"under_price":-110,"home_ml":-127,"away_ml":127},"fair_spread":-6.67,"fair_total":49.27,"edges":[{"market":"spread","side":"home","team":"Miami","line":"-2","price":-110,"gap":4.67,"prob":0.6270420188244548,"push":0.029026555959120348,"ev":0.22610677371489757,"strict":true,"keys":[3],"fair":-6.67},{"market":"total","side":"under","team":null,"line":"u53.5","price":-110,"gap":4.23,"prob":0.6528655336440587,"push":0.0,"ev":0.24637965513865756,"strict":true,"keys":[],"fair":49.27},{"market":"moneyline","side":"home","team":"Miami","line":"-127","price":-127,"gap":13.8,"prob":0.6978925481549042,"push":0.0,"ev":0.24741423961545872,"strict":true,"keys":[],"fair":-231}],"review":[],"best_ev":0.24741423961545872,"best_gap":4.67,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026036","home":"Miami (OH)","away":"Alabama","home_conf":"Mid-American","away_conf":"SEC","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":-15.0,"spread_price":-110,"total":59.0,"over_price":-110,"under_price":-110,"home_ml":-650,"away_ml":650},"fair_spread":-13.86,"fair_total":54.85,"edges":[{"market":"total","side":"under","team":null,"line":"u59","price":-110,"gap":4.15,"prob":0.6328625132314367,"push":0.03441062504418024,"ev":0.24260269575874127,"strict":true,"keys":[],"fair":54.85}],"review":[],"best_ev":0.24260269575874127,"best_gap":4.15,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026016","home":"Clemson","away":"Georgia","home_conf":"ACC","away_conf":"SEC","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":2.5,"spread_price":-110,"total":54.0,"over_price":-110,"under_price":-110,"home_ml":134,"away_ml":-134},"fair_spread":-0.91,"fair_total":51.61,"edges":[{"market":"spread","side":"home","team":"Clemson","line":"+2.5","price":-110,"gap":3.41,"prob":0.6043984192836738,"push":0.0,"ev":0.15385152772337718,"strict":true,"keys":[],"fair":-0.91},{"market":"total","side":"under","team":null,"line":"u54","price":-110,"gap":2.39,"prob":0.5696798116075894,"push":0.03616699561529957,"ev":0.12373754504797019,"strict":false,"keys":[],"fair":51.61},{"market":"moneyline","side":"home","team":"Clemson","line":"+134","price":134,"gap":10.1,"prob":0.5280738480405147,"push":0.0,"ev":0.23569280441480445,"strict":true,"keys":[],"fair":-112}],"review":[],"best_ev":0.23569280441480445,"best_gap":3.41,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026017","home":"Boise State","away":"UNLV","home_conf":"Mountain West","away_conf":"Mountain West","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"ESPN","slate":"g5-tv","posted":{"spread":3.5,"spread_price":-110,"total":48.0,"over_price":-110,"under_price":-110,"home_ml":151,"away_ml":-151},"fair_spread":1.65,"fair_total":51.76,"edges":[{"market":"total","side":"over","team":null,"line":"o48","price":-110,"gap":3.76,"prob":0.6191541401572909,"push":0.03487134510926371,"ev":0.2168928854095462,"strict":true,"keys":[],"fair":51.76},{"market":"moneyline","side":"home","team":"Boise State","line":"+151","price":151,"gap":5.1,"prob":0.44912416468031297,"push":0.0,"ev":0.12730165334758559,"strict":true,"keys":[],"fair":123}],"review":[],"best_ev":0.2168928854095462,"best_gap":3.76,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026038","home":"Oregon","away":"Michigan","home_conf":"Big Ten","away_conf":"Big Ten","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":8.5,"spread_price":-110,"total":47.5,"over_price":-110,"under_price":-110,"home_ml":278,"away_ml":-278},"fair_spread":12.67,"fair_total":50.66,"edges":[{"market":"spread","side":"away","team":"Michigan","line":"-8.5","price":-110,"gap":4.17,"prob":0.6270712560583325,"push":0.0,"ev":0.19713603429318016,"strict":true,"keys":[10],"fair":12.67},{"market":"total","side":"over","team":null,"line":"o47.5","price":-110,"gap":3.16,"prob":0.6156742102279678,"push":0.0,"ev":0.17537803770793847,"strict":true,"keys":[],"fair":50.66},{"market":"moneyline","side":"away","team":"Michigan","line":"-278","price":-278,"gap":10.2,"prob":0.8376371985324218,"push":0.0,"ev":0.13894554332825698,"strict":true,"keys":[],"fair":-516}],"review":[],"best_ev":0.19713603429318016,"best_gap":4.17,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026046","home":"Miami","away":"Tulane","home_conf":"ACC","away_conf":"American Athletic","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":33.5,"spread_price":-110,"total":50.5,"over_price":-110,"under_price":-110,"home_ml":3233,"away_ml":-3233},"fair_spread":37.48,"fair_total":49.85,"edges":[{"market":"spread","side":"away","team":"Tulane","line":"-33.5","price":-110,"gap":3.98,"prob":0.6214898464936817,"push":0.0,"ev":0.18648061603339228,"strict":true,"keys":[],"fair":37.48}],"review":[],"best_ev":0.18648061603339228,"best_gap":3.98,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026007","home":"Georgia","away":"Oregon","home_conf":"SEC","away_conf":"Big Ten","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"CBSSN","slate":"power","posted":{"spread":-3.5,"spread_price":-110,"total":47.5,"over_price":-110,"under_price":-110,"home_ml":-151,"away_ml":151},"fair_spread":-7.16,"fair_total":50.45,"edges":[{"market":"spread","side":"home","team":"Georgia","line":"-3.5","price":-110,"gap":3.66,"prob":0.6121005265993937,"push":0.0,"ev":0.16855555078066076,"strict":true,"keys":[7],"fair":-7.16},{"market":"total","side":"over","team":null,"line":"o47.5","price":-110,"gap":2.95,"prob":0.6079513378734567,"push":0.0,"ev":0.1606343723038718,"strict":false,"keys":[],"fair":50.45},{"market":"moneyline","side":"home","team":"Georgia","line":"-151","price":-151,"gap":11.0,"prob":0.7111835042822641,"push":0.0,"ev":0.1821659574493264,"strict":true,"keys":[],"fair":-246}],"review":[],"best_ev":0.1821659574493264,"best_gap":3.66,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026050","home":"Ole Miss","away":"Tulane","home_conf":"SEC","away_conf":"American Athletic","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"CBSSN","slate":"power","posted":{"spread":37.5,"spread_price":-110,"total":54.5,"over_price":-110,"under_price":-110,"home_ml":3233,"away_ml":-3233},"fair_spread":37.78,"fair_total":51.31,"edges":[{"market":"total","side":"under","team":null,"line":"u54.5","price":-110,"gap":3.19,"prob":0.6164276391186485,"push":0.0,"ev":0.17681640195378345,"strict":true,"keys":[],"fair":51.31}],"review":["moneyline and spread disagree by 13.3 pts, price looks stale"],"best_ev":0.17681640195378345,"best_gap":3.19,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026011","home":"Penn State","away":"UNLV","home_conf":"Big Ten","away_conf":"Mountain West","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"ESPN+","slate":"power","posted":{"spread":-17.0,"spread_price":-110,"total":57.5,"over_price":-110,"under_price":-110,"home_ml":-862,"away_ml":862},"fair_spread":-16.62,"fair_total":54.33,"edges":[{"market":"total","side":"under","team":null,"line":"u57.5","price":-110,"gap":3.17,"prob":0.6158302232305128,"push":0.0,"ev":0.17567588071279727,"strict":true,"keys":[],"fair":54.33}],"review":[],"best_ev":0.17567588071279727,"best_gap":3.17,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026021","home":"Miami","away":"Ole Miss","home_conf":"ACC","away_conf":"SEC","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"ESPN+","slate":"power","posted":{"spread":-5.5,"spread_price":-110,"total":50.5,"over_price":-110,"under_price":-110,"home_ml":-193,"away_ml":193},"fair_spread":-3.27,"fair_total":48.76,"edges":[{"market":"spread","side":"away","team":"Ole Miss","line":"+5.5","price":-110,"gap":2.23,"prob":0.5688000653119496,"push":0.0,"ev":0.0858910337773583,"strict":false,"keys":[],"fair":-3.27},{"market":"moneyline","side":"away","team":"Ole Miss","line":"+193","price":193,"gap":5.8,"prob":0.39967699051968,"push":0.0,"ev":0.17105358222266231,"strict":true,"keys":[],"fair":150}],"review":[],"best_ev":0.17105358222266231,"best_gap":2.23,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026001","home":"Texas Tech","away":"Boise State","home_conf":"Big 12","away_conf":"Mountain West","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"ESPN+","slate":"power","posted":{"spread":2.5,"spread_price":-110,"total":52.0,"over_price":-110,"under_price":-110,"home_ml":134,"away_ml":-134},"fair_spread":0.18,"fair_total":50.55,"edges":[{"market":"spread","side":"home","team":"Texas Tech","line":"+2.5","price":-110,"gap":2.32,"prob":0.5714228411298269,"push":0.0,"ev":0.09089815124785128,"strict":false,"keys":[],"fair":0.18},{"market":"moneyline","side":"home","team":"Texas Tech","line":"+134","price":134,"gap":6.7,"prob":0.49428657867863607,"push":0.0,"ev":0.1566305941080085,"strict":true,"keys":[],"fair":102}],"review":[],"best_ev":0.1566305941080085,"best_gap":2.32,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026003","home":"Kansas State","away":"Georgia","home_conf":"Big 12","away_conf":"SEC","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"ESPN+","slate":"power","posted":{"spread":-13.5,"spread_price":-110,"total":56.0,"over_price":-110,"under_price":-110,"home_ml":-530,"away_ml":530},"fair_spread":-16.11,"fair_total":53.34,"edges":[{"market":"spread","side":"home","team":"Kansas State","line":"-13.5","price":-110,"gap":2.61,"prob":0.5802714533907924,"push":0.0,"ev":0.10779095647333103,"strict":false,"keys":[14],"fair":-16.11},{"market":"total","side":"under","team":null,"line":"u56","price":-110,"gap":2.66,"prob":0.5795636012823938,"push":0.035953770355723225,"ev":0.1423933728039296,"strict":false,"keys":[],"fair":53.34},{"market":"moneyline","side":"home","team":"Kansas State","line":"-530","price":-530,"gap":5.3,"prob":0.8946994472010793,"push":0.0,"ev":0.06351066365411315,"strict":true,"keys":[],"fair":-850}],"review":[],"best_ev":0.1423933728039296,"best_gap":2.66,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026037","home":"Miami (OH)","away":"Tulane","home_conf":"Mid-American","away_conf":"American Athletic","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"g5-market","posted":{"spread":13.5,"spread_price":-110,"total":54.5,"over_price":-110,"under_price":-110,"home_ml":530,"away_ml":-530},"fair_spread":16.27,"fair_total":54.77,"edges":[{"market":"spread","side":"away","team":"Tulane","line":"-13.5","price":-110,"gap":2.77,"prob":0.5851016993845913,"push":0.0,"ev":0.1170123351887653,"strict":false,"keys":[14],"fair":16.27},{"market":"moneyline","side":"away","team":"Tulane","line":"-530","price":-530,"gap":5.6,"prob":0.8969367948204434,"push":0.0,"ev":0.06617015233373463,"strict":true,"keys":[],"fair":-870}],"review":[],"best_ev":0.1170123351887653,"best_gap":2.77,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026005","home":"Penn State","away":"Texas Tech","home_conf":"Big Ten","away_conf":"Big 12","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":-22.5,"spread_price":-110,"total":56.0,"over_price":-110,"under_price":-110,"home_ml":-1992,"away_ml":1992},"fair_spread":-24.59,"fair_total":53.89,"edges":[{"market":"spread","side":"home","team":"Penn State","line":"-22.5","price":-110,"gap":2.09,"prob":0.5645233515233092,"push":0.0,"ev":0.07772639836268125,"strict":false,"keys":[],"fair":-24.59},{"market":"total","side":"under","team":null,"line":"u56","price":-110,"gap":2.11,"prob":0.5593146961262052,"push":0.036366280833158404,"ev":0.10414888252864107,"strict":false,"keys":[],"fair":53.89}],"review":[],"best_ev":0.10414888252864107,"best_gap":2.11,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026055","home":"Georgia","away":"Boise State","home_conf":"SEC","away_conf":"Mountain West","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"ESPN","slate":"power","posted":{"spread":-3.0,"spread_price":-110,"total":51.5,"over_price":-110,"under_price":-110,"home_ml":-143,"away_ml":143},"fair_spread":-3.93,"fair_total":49.41,"edges":[{"market":"total","side":"under","team":null,"line":"u51.5","price":-110,"gap":2.09,"prob":0.5768904486859173,"push":0.0,"ev":0.10133631112766028,"strict":false,"keys":[],"fair":49.41},{"market":"moneyline","side":"home","team":"Georgia","line":"-143","price":-143,"gap":3.1,"prob":0.6199308960397757,"push":0.0,"ev":0.05344900515849993,"strict":false,"keys":[],"fair":-163}],"review":[],"best_ev":0.10133631112766028,"best_gap":2.09,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026013","home":"Ohio","away":"Kansas State","home_conf":"Mid-American","away_conf":"Big 12","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":-3.0,"spread_price":-110,"total":52.5,"over_price":-110,"under_price":-110,"home_ml":-143,"away_ml":143},"fair_spread":-2.35,"fair_total":52.34,"edges":[],"review":[],"best_ev":null,"best_gap":0.0,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026024","home":"Ohio State","away":"UNLV","home_conf":"Big Ten","away_conf":"Mountain West","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":-18.5,"spread_price":-110,"total":51.5,"over_price":-110,"under_price":-110,"home_ml":-1073,"away_ml":1073},"fair_spread":-17.06,"fair_total":52.84,"edges":[],"review":[],"best_ev":null,"best_gap":0.0,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026041","home":"Alabama","away":"Texas","home_conf":"SEC","away_conf":"SEC","kickoff":"2026-09-13T19:00:00Z","week":3,"neutral":false,"conference_game":true,"tv":"ESPN+","slate":"power","posted":{"spread":13.5,"spread_price":-110,"total":51.5,"over_price":-110,"under_price":-110,"home_ml":530,"away_ml":-530},"fair_spread":11.72,"fair_total":53.45,"edges":[],"review":[],"best_ev":null,"best_gap":0.0,"last_update":"2026-09-11T14:00:00Z"},{"id":"evt2026054","home":"UNLV","away":"Georgia","home_conf":"Mountain West","away_conf":"SEC","kickoff":"2026-09-13T19:00:00Z","week":null,"neutral":false,"conference_game":false,"tv":null,"slate":"power","posted":{"spread":-6.0,"spread_price":-110,"total":54.0,"over_price":-110,"under_price":-110,"home_ml":-205,"away_ml":205},"fair_spread":-6.34,"fair_total":52.84,"edges":[],"review":[],"best_ev":null,"best_gap":0.0,"last_update":"2026-09-11T14:00:00Z"}],"teams":{"Alabama":{"school":"Alabama","conference":"SEC","logo":null,"sp":-3.32,"sp_off":27.22,"sp_def":27.62,"sp_rank":1,"off_ppa":0.1375,"def_ppa":0.1388,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Georgia":{"school":"Georgia","conference":"SEC","logo":null,"sp":-12.26,"sp_off":24.5,"sp_def":30.56,"sp_rank":2,"off_ppa":0.0918,"def_ppa":0.1768,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Texas":{"school":"Texas","conference":"SEC","logo":null,"sp":9.72,"sp_off":37.22,"sp_def":21.64,"sp_rank":3,"off_ppa":0.2238,"def_ppa":0.0668,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Ole Miss":{"school":"Ole Miss","conference":"SEC","logo":null,"sp":-13.14,"sp_off":21.09,"sp_def":29.74,"sp_rank":4,"off_ppa":0.0711,"def_ppa":0.1941,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Ohio State":{"school":"Ohio State","conference":"Big Ten","logo":null,"sp":5.1,"sp_off":31.3,"sp_def":23.92,"sp_rank":5,"off_ppa":0.1935,"def_ppa":0.0921,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Michigan":{"school":"Michigan","conference":"Big Ten","logo":null,"sp":-1.56,"sp_off":27.25,"sp_def":23.89,"sp_rank":6,"off_ppa":0.1485,"def_ppa":0.1295,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Oregon":{"school":"Oregon","conference":"Big Ten","logo":null,"sp":-16.18,"sp_off":24.49,"sp_def":29.87,"sp_rank":7,"off_ppa":0.0673,"def_ppa":0.1972,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Penn State":{"school":"Penn State","conference":"Big Ten","logo":null,"sp":4.67,"sp_off":31.8,"sp_def":20.2,"sp_rank":8,"off_ppa":0.186,"def_ppa":0.0984,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Texas Tech":{"school":"Texas Tech","conference":"Big 12","logo":null,"sp":-16.28,"sp_off":24.25,"sp_def":27.84,"sp_rank":9,"off_ppa":0.0619,"def_ppa":0.2018,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Kansas State":{"school":"Kansas State","conference":"Big 12","logo":null,"sp":0.63,"sp_off":29.27,"sp_def":22.91,"sp_rank":10,"off_ppa":0.1665,"def_ppa":0.1146,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Clemson":{"school":"Clemson","conference":"ACC","logo":null,"sp":-14.23,"sp_off":22.16,"sp_def":28.34,"sp_rank":11,"off_ppa":0.0704,"def_ppa":0.1946,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Miami":{"school":"Miami","conference":"ACC","logo":null,"sp":-12.85,"sp_off":24.03,"sp_def":32.78,"sp_rank":12,"off_ppa":0.0759,"def_ppa":0.19,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"NC State":{"school":"NC State","conference":"ACC","logo":null,"sp":2.7,"sp_off":30.03,"sp_def":24.95,"sp_rank":13,"off_ppa":0.1641,"def_ppa":0.1166,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Notre Dame":{"school":"Notre Dame","conference":"FBS Independents","logo":null,"sp":16.56,"sp_off":38.5,"sp_def":16.06,"sp_rank":14,"off_ppa":0.2703,"def_ppa":0.0281,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Boise State":{"school":"Boise State","conference":"Mountain West","logo":null,"sp":-13.19,"sp_off":20.82,"sp_def":28.34,"sp_rank":15,"off_ppa":0.0847,"def_ppa":0.1828,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"UNLV":{"school":"UNLV","conference":"Mountain West","logo":null,"sp":-8.92,"sp_off":27.9,"sp_def":24.37,"sp_rank":16,"off_ppa":0.1109,"def_ppa":0.1609,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Memphis":{"school":"Memphis","conference":"American Athletic","logo":null,"sp":7.57,"sp_off":33.8,"sp_def":23.85,"sp_rank":17,"off_ppa":0.2176,"def_ppa":0.072,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Tulane":{"school":"Tulane","conference":"American Athletic","logo":null,"sp":24.51,"sp_off":35.86,"sp_def":10.01,"sp_rank":18,"off_ppa":0.3022,"def_ppa":0.0015,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Miami (OH)":{"school":"Miami (OH)","conference":"Mid-American","logo":null,"sp":7.89,"sp_off":30.85,"sp_def":19.66,"sp_rank":19,"off_ppa":0.2044,"def_ppa":0.083,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58},"Ohio":{"school":"Ohio","conference":"Mid-American","logo":null,"sp":0.82,"sp_off":30.96,"sp_def":25.54,"sp_rank":20,"off_ppa":0.1567,"def_ppa":0.1227,"off_success":0.44,"def_success":0.4,"off_explosive":1.24,"def_explosive":1.18,"def_havoc":0.17,"plays":820.0,"drives":132.0,"pace":6.212121212121212,"returning_off":0.62,"returning_def":0.58}},"sample":true}</script>
+<script>
+"use strict";
+
+var DATA = JSON.parse(document.getElementById("board-data").textContent);
+var GAMES = DATA.games || [];
+var UNIT = DATA.unit || 20;
+var FD_BOARD = "https://sportsbook.fanduel.com/navigation/ncaaf";
+
+var STORE_NOTES = "cfb_notes_v1";
+var STORE_BETS = "cfb_bets_v1";
+
+function load(key, fallback){
+  try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+  catch (e) { return fallback; }
+}
+function save(key, value){
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+}
+
+var NOTES = load(STORE_NOTES, {});
+var BETS = load(STORE_BETS, []);
+
+/* ------------------------------------------------------------ helpers */
+
+function esc(text){
+  return String(text === null || text === undefined ? "" : text)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;");
+}
+function num(value, places){
+  if (value === null || value === undefined || isNaN(value)) return "-";
+  return Number(value).toFixed(places === undefined ? 1 : places);
+}
+function signed(value, places){
+  if (value === null || value === undefined || isNaN(value)) return "-";
+  var text = Number(value).toFixed(places === undefined ? 1 : places);
+  return Number(value) > 0 ? "+" + text : text;
+}
+function pct(value){
+  if (value === null || value === undefined || isNaN(value)) return "-";
+  return (Number(value) * 100).toFixed(1) + "%";
+}
+function priceText(value){
+  if (value === null || value === undefined) return "";
+  return Number(value) > 0 ? "+" + value : String(value);
+}
+function kickText(iso){
+  if (!iso) return "";
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleString(undefined, {
+    weekday:"short", month:"short", day:"numeric",
+    hour:"numeric", minute:"2-digit"
+  });
+}
+function gameById(id){
+  for (var i = 0; i < GAMES.length; i++){ if (GAMES[i].id === id) return GAMES[i]; }
+  return null;
+}
+function edgeKey(game, edge){
+  return game.id + "|" + edge.market + "|" + edge.side;
+}
+function betFor(key){
+  for (var i = 0; i < BETS.length; i++){ if (BETS[i].key === key) return BETS[i]; }
+  return null;
+}
+
+/* ------------------------------------------------------------ chrome */
+
+function renderSampleBar(){
+  if (!DATA.sample) return;
+  document.getElementById("samplebar").innerHTML =
+    '<div style="background:var(--fade);color:#fff;padding:10px 14px;margin-top:16px;' +
+    'font-size:13.5px;font-weight:600">Sample data. Every line, team and number on ' +
+    'this page is synthetic, generated to show the layout. Nothing here is a real ' +
+    'FanDuel price. Run the build with your API keys to get the live board.</div>';
+}
+
+function renderChrome(){
+  var model = DATA.model || {};
+  document.getElementById("sub").textContent =
+    "FanDuel lines, Power 4 plus televised Group of 5. Season " + DATA.season +
+    (DATA.week ? ", week " + DATA.week : "");
+
+  var bits = [];
+  bits.push("<span>Built <b>" + esc(kickText(DATA.generated_at)) + "</b></span>");
+  bits.push("<span>Games <b>" + GAMES.length + "</b></span>");
+  bits.push("<span>Model error <b>" + num(model.margin_sigma) + " pts</b> on margin, <b>" +
+            num(model.total_sigma) + "</b> on totals</span>");
+  bits.push("<span>Home edge <b>" + num(model.home_edge) + " pts</b></span>");
+  bits.push("<span>Fitted on <b>" + (model.margin_n || 0) + "</b> games</span>");
+  if (DATA.quota && DATA.quota.odds_remaining !== null){
+    bits.push("<span>Odds credits left <b>" + esc(DATA.quota.odds_remaining) + "</b></span>");
+  }
+  document.getElementById("meta").innerHTML = bits.join("");
+}
+
+function showView(name){
+  var views = ["plays","board","log"];
+  for (var i = 0; i < views.length; i++){
+    var on = views[i] === name;
+    document.getElementById("v-" + views[i]).className = on ? "view on" : "view";
+    document.getElementById("t-" + views[i]).setAttribute("aria-selected", on ? "true" : "false");
+  }
+  if (name === "log") renderLog();
+}
+
+/* ------------------------------------------------------------ plays */
+
+function allEdges(){
+  var out = [];
+  for (var i = 0; i < GAMES.length; i++){
+    var game = GAMES[i];
+    for (var j = 0; j < (game.edges || []).length; j++){
+      out.push({ game: game, edge: game.edges[j] });
+    }
+  }
+  out.sort(function(a, b){
+    var ea = a.edge.ev === null || a.edge.ev === undefined ? -9 : a.edge.ev;
+    var eb = b.edge.ev === null || b.edge.ev === undefined ? -9 : b.edge.ev;
+    return eb - ea;
+  });
+  return out;
+}
+
+function betLabel(edge){
+  if (edge.market === "total") return edge.line;
+  if (edge.market === "moneyline") return edge.team + " " + edge.line;
+  return edge.team + " " + edge.line;
+}
+
+function whyText(game, edge){
+  var parts = [];
+  if (edge.market === "spread"){
+    parts.push("Model makes it <b>" + signed(edge.fair) + "</b> against a posted <b>" +
+               esc(String(game.posted.spread)) + "</b>.");
+  } else if (edge.market === "total"){
+    parts.push("Model total <b>" + num(edge.fair) + "</b> against a posted <b>" +
+               esc(String(game.posted.total)) + "</b>.");
+  } else {
+    parts.push("Model price <b>" + priceText(edge.fair) + "</b> against a posted <b>" +
+               priceText(edge.price) + "</b>.");
+  }
+  parts.push("Win probability <b>" + pct(edge.prob) + "</b>");
+  if (edge.push > 0.001) parts.push("push <b>" + pct(edge.push) + "</b>");
+  return parts.join(" ");
+}
+
+function tagsHTML(game, edge){
+  var out = [];
+  out.push('<span class="tag">' + esc(edge.market) + "</span>");
+  out.push('<span class="tag' + (edge.strict ? " s" : "") + '">' +
+           (edge.strict ? "clears 3 pts" : "2 pt flag only") + "</span>");
+  if (edge.keys && edge.keys.length){
+    out.push('<span class="tag k">crosses ' + edge.keys.join(", ") + "</span>");
+  }
+  if (game.neutral) out.push('<span class="tag">neutral site</span>');
+  if (game.slate !== "power") out.push('<span class="tag">G5</span>');
+  if (NOTES[game.id]) out.push('<span class="tag k">note</span>');
+  return out.join("");
+}
+
+function playHTML(entry){
+  var game = entry.game, edge = entry.edge;
+  var key = edgeKey(game, edge);
+  var logged = betFor(key);
+  var evClass = (edge.ev !== null && edge.ev > 0) ? "pos" : "neg";
+
+  var html = '<article class="play" id="p-' + esc(key) + '">';
+  html += '<div class="gapcell"><span class="gapnum">' + num(edge.gap) + "</span>";
+  html += '<span class="gapunit">' + (edge.market === "moneyline" ? "pts of prob" : "pts off") + "</span></div>";
+
+  html += '<div class="playbody">';
+  html += "<h3>" + esc(game.away) + " at " + esc(game.home) + "</h3>";
+  html += '<div class="bet">' + esc(betLabel(edge)) +
+          '<span class="price">' + priceText(edge.price) + "</span></div>";
+  html += '<p class="why">' + whyText(game, edge) + "</p>";
+  html += '<div class="tags">' + tagsHTML(game, edge) + "</div>";
+  html += '<div class="acts" style="justify-content:flex-start">';
+  html += '<button class="mini" onclick="toggleNote(\'' + esc(game.id) + '\')">Availability note</button>';
+  html += '<a class="mini" href="' + FD_BOARD + '" target="_blank" rel="noopener">Open FanDuel</a>';
+  html += "</div>";
+  html += '<div id="n-' + esc(game.id) + '"></div>';
+  html += "</div>";
+
+  html += '<div class="numcell">';
+  html += '<div class="ev ' + evClass + '">' + signed(edge.ev === null ? 0 : edge.ev * 100) + "%</div>";
+  html += '<div class="evlabel">expected value</div>';
+  html += '<div class="stake">' + esc(kickText(game.kickoff)) + "</div>";
+  html += '<div class="acts">';
+  if (logged){
+    html += '<button class="mini on" onclick="unlogBet(\'' + esc(key) + '\')">Logged at ' +
+            esc(logged.line) + "</button>";
+  } else {
+    html += '<button class="mini" onclick="logBet(\'' + esc(game.id) + '\',\'' +
+            esc(edge.market) + '\',\'' + esc(edge.side) + '\')">Log ' + UNIT + " unit</button>";
+  }
+  html += "</div></div></article>";
+  return html;
+}
+
+function renderPlays(){
+  var entries = allEdges();
+  var host = document.getElementById("v-plays");
+
+  if (!entries.length){
+    host.innerHTML = '<p class="empty">No game on the board is more than ' +
+      DATA.thresholds.flag + " points off the model right now. That is a normal " +
+      "result midweek before the full slate posts. Check the full board for the raw numbers.</p>";
+    return;
+  }
+
+  var strict = 0;
+  for (var i = 0; i < entries.length; i++){ if (entries[i].edge.strict) strict++; }
+
+  var html = '<div class="warn">' + entries.length + " plays clear the 2 point flag, " +
+    strict + " of them also clear 3. The model's own error on a single game is " +
+    num((DATA.model || {}).margin_sigma) + " points, so a 2 point gap is well inside the " +
+    "noise band. Log both and let the closing line value decide which threshold holds up.</div>";
+
+  for (var j = 0; j < entries.length; j++){ html += playHTML(entries[j]); }
+  host.innerHTML = html;
+}
+
+/* ------------------------------------------------------------ board */
+
+var sortKey = "best_ev", sortDir = -1;
+
+function boardValue(game, key){
+  if (key === "matchup") return (game.away + game.home).toLowerCase();
+  if (key === "kickoff") return game.kickoff || "";
+  if (key === "spread") return game.posted.spread === null ? 99 : game.posted.spread;
+  if (key === "fair_spread") return game.fair_spread === null ? 99 : game.fair_spread;
+  if (key === "total") return game.posted.total === null ? 0 : game.posted.total;
+  if (key === "fair_total") return game.fair_total === null ? 0 : game.fair_total;
+  if (key === "best_gap") return game.best_gap || 0;
+  if (key === "best_ev") return game.best_ev === null || game.best_ev === undefined ? -9 : game.best_ev;
+  return 0;
+}
+
+function sortBoard(key){
+  if (sortKey === key) sortDir = -sortDir; else { sortKey = key; sortDir = -1; }
+  renderBoard();
+}
+
+function filtered(){
+  var q = (document.getElementById("q").value || "").toLowerCase().trim();
+  var mode = document.getElementById("slate").value;
+  var out = [];
+  for (var i = 0; i < GAMES.length; i++){
+    var game = GAMES[i];
+    if (q && (game.home + " " + game.away).toLowerCase().indexOf(q) === -1) continue;
+    if (mode === "power" && game.slate !== "power") continue;
+    if (mode === "g5" && game.slate === "power") continue;
+    if (mode === "flagged" && !(game.edges || []).length) continue;
+    out.push(game);
+  }
+  out.sort(function(a, b){
+    var va = boardValue(a, sortKey), vb = boardValue(b, sortKey);
+    if (va < vb) return -sortDir;
+    if (va > vb) return sortDir;
+    return 0;
+  });
+  return out;
+}
+
+function headCell(key, label){
+  var dir = sortKey === key ? ' data-dir="1"' : "";
+  return '<th' + dir + ' onclick="sortBoard(\'' + key + '\')">' + label + "</th>";
+}
+
+function boardRow(game){
+  var flagged = (game.edges || []).length;
+  var html = "<tr>";
+  html += '<td><div class="matchup">' + esc(game.away) + " at " + esc(game.home);
+  html += "<small>" + esc(kickText(game.kickoff));
+  if (game.tv) html += " &middot; " + esc(game.tv);
+  if (NOTES[game.id]) html += ' &middot; <span class="noted">note</span>';
+  html += "</small></div></td>";
+  html += "<td>" + (game.posted.spread === null ? "-" : signed(game.posted.spread)) + "</td>";
+  html += "<td>" + (game.fair_spread === null ? "-" : signed(game.fair_spread)) + "</td>";
+  html += "<td>" + (game.posted.total === null ? "-" : num(game.posted.total)) + "</td>";
+  html += "<td>" + (game.fair_total === null ? "-" : num(game.fair_total)) + "</td>";
+  html += '<td class="' + (flagged ? "flagged" : "") + '">' + num(game.best_gap) + "</td>";
+  html += '<td class="' + (flagged ? "flagged" : "") + '">' +
+          (game.best_ev === null || game.best_ev === undefined ? "-" : signed(game.best_ev * 100)) + "%</td>";
+  html += '<td><button class="mini" onclick="toggleNote(\'' + esc(game.id) + '\')">Note</button></td>';
+  html += "</tr>";
+  html += '<tr><td colspan="8" style="padding:0;border:none"><div id="bn-' + esc(game.id) + '"></div></td></tr>';
+  return html;
+}
+
+function renderBoard(){
+  var rows = filtered();
+  var html = "<table><thead><tr>";
+  html += headCell("matchup", "Matchup");
+  html += headCell("spread", "FD spread");
+  html += headCell("fair_spread", "Fair");
+  html += headCell("total", "FD total");
+  html += headCell("fair_total", "Fair");
+  html += headCell("best_gap", "Gap");
+  html += headCell("best_ev", "Best EV");
+  html += "<th></th></tr></thead><tbody>";
+  if (!rows.length){
+    html += '<tr><td colspan="8" class="empty">Nothing matches that filter.</td></tr>';
+  }
+  for (var i = 0; i < rows.length; i++){ html += boardRow(rows[i]); }
+  html += "</tbody></table>";
+  document.getElementById("boardwrap").innerHTML = html;
+}
+
+/* ------------------------------------------------------------ notes */
+
+function noteHTML(id){
+  var value = NOTES[id] || "";
+  var links = DATA.injury_links || [];
+  var html = '<div class="notebox">';
+  html += '<textarea id="ta-' + esc(id) + '" placeholder="Who is out, who is questionable, who replaces them.">' +
+          esc(value) + "</textarea>";
+  html += '<div class="row">';
+  html += '<button class="mini" onclick="saveNote(\'' + esc(id) + '\')">Save note</button>';
+  html += '<button class="mini" onclick="clearNote(\'' + esc(id) + '\')">Clear</button>';
+  html += "</div>";
+  html += '<div class="links">Check availability: ';
+  var parts = [];
+  for (var i = 0; i < links.length; i++){
+    parts.push('<a href="' + esc(links[i].url) + '" target="_blank" rel="noopener">' +
+               esc(links[i].label) + "</a>");
+  }
+  html += parts.join(" &middot; ");
+  html += ". Power 4 conferences post official reports from three days out.";
+  html += "</div></div>";
+  return html;
+}
+
+function toggleNote(id){
+  var hosts = [document.getElementById("n-" + id), document.getElementById("bn-" + id)];
+  for (var i = 0; i < hosts.length; i++){
+    var host = hosts[i];
+    if (!host) continue;
+    host.innerHTML = host.innerHTML ? "" : noteHTML(id);
+  }
+}
+
+function saveNote(id){
+  var box = document.getElementById("ta-" + id);
+  if (!box) return;
+  var value = box.value.trim();
+  if (value) NOTES[id] = value; else delete NOTES[id];
+  save(STORE_NOTES, NOTES);
+  toggleNote(id);
+  renderPlays();
+  renderBoard();
+}
+
+function clearNote(id){
+  delete NOTES[id];
+  save(STORE_NOTES, NOTES);
+  toggleNote(id);
+  renderPlays();
+  renderBoard();
+}
+
+/* ------------------------------------------------------------ bets */
+
+function findEdge(game, market, side){
+  for (var i = 0; i < (game.edges || []).length; i++){
+    var edge = game.edges[i];
+    if (edge.market === market && edge.side === side) return edge;
+  }
+  return null;
+}
+
+function logBet(gameId, market, side){
+  var game = gameById(gameId);
+  if (!game) return;
+  var edge = findEdge(game, market, side);
+  if (!edge) return;
+  BETS.push({
+    key: edgeKey(game, edge),
+    placed: new Date().toISOString(),
+    game: game.away + " at " + game.home,
+    kickoff: game.kickoff,
+    market: market,
+    side: side,
+    bet: betLabel(edge),
+    line: edge.line,
+    price: edge.price,
+    fair: edge.fair,
+    prob: edge.prob,
+    ev: edge.ev,
+    gap: edge.gap,
+    strict: edge.strict,
+    stake: UNIT,
+    closing_line: null,
+    result: null
+  });
+  save(STORE_BETS, BETS);
+  renderPlays();
+}
+
+function unlogBet(key){
+  var out = [];
+  for (var i = 0; i < BETS.length; i++){ if (BETS[i].key !== key) out.push(BETS[i]); }
+  BETS = out;
+  save(STORE_BETS, BETS);
+  renderPlays();
+  renderLog();
+}
+
+function setResult(index, value){
+  BETS[index].result = value === "" ? null : value;
+  save(STORE_BETS, BETS);
+  renderLog();
+}
+
+function setClosing(index, value){
+  var parsed = parseFloat(value);
+  BETS[index].closing_line = isNaN(parsed) ? null : parsed;
+  save(STORE_BETS, BETS);
+  renderLog();
+}
+
+function betProfit(bet){
+  if (!bet.result) return 0;
+  if (bet.result === "push") return 0;
+  if (bet.result === "win"){
+    var price = Number(bet.price);
+    var payout = price < 0 ? 100 / (-price) : price / 100;
+    return bet.stake * payout;
+  }
+  return -bet.stake;
+}
+
+function clvPoints(bet){
+  if (bet.closing_line === null || bet.closing_line === undefined) return null;
+  var taken = parseFloat(String(bet.line).replace(/[^0-9.\-+]/g, ""));
+  if (isNaN(taken)) return null;
+  // Positive means the number moved toward the side already taken.
+  if (bet.market === "total"){
+    return String(bet.line).charAt(0) === "o"
+      ? bet.closing_line - taken
+      : taken - bet.closing_line;
+  }
+  return taken - bet.closing_line;
+}
+
+function logRow(bet, index){
+  var profit = betProfit(bet);
+  var clv = clvPoints(bet);
+  var html = "<tr>";
+  html += '<td><div class="matchup">' + esc(bet.bet) + "<small>" + esc(bet.game) +
+          " &middot; " + esc(kickText(bet.kickoff)) + "</small></div></td>";
+  html += "<td>" + priceText(bet.price) + "</td>";
+  html += "<td>" + num(bet.gap) + (bet.strict ? " (3+)" : "") + "</td>";
+  html += "<td>" + signed(bet.ev === null ? 0 : bet.ev * 100) + "%</td>";
+  html += '<td><input style="width:72px" inputmode="decimal" value="' +
+          (bet.closing_line === null ? "" : esc(bet.closing_line)) +
+          '" onchange="setClosing(' + index + ', this.value)" placeholder="close"></td>';
+  html += '<td class="' + (clv === null ? "" : (clv > 0 ? "flagged" : "noted")) + '">' +
+          (clv === null ? "-" : signed(clv)) + "</td>";
+  html += '<td><select onchange="setResult(' + index + ', this.value)">' +
+          optionHTML("", "open", bet.result) +
+          optionHTML("win", "win", bet.result) +
+          optionHTML("loss", "loss", bet.result) +
+          optionHTML("push", "push", bet.result) +
+          "</select></td>";
+  html += '<td class="' + (profit > 0 ? "flagged" : (profit < 0 ? "noted" : "")) + '">' +
+          (bet.result ? "$" + profit.toFixed(2) : "-") + "</td>";
+  html += '<td><button class="mini" onclick="unlogBet(\'' + esc(bet.key) + '\')">Remove</button></td>';
+  html += "</tr>";
+  return html;
+}
+
+function optionHTML(value, label, current){
+  var selected = (current || "") === value ? " selected" : "";
+  return '<option value="' + value + '"' + selected + ">" + label + "</option>";
+}
+
+function renderLog(){
+  var host = document.getElementById("v-log");
+  if (!BETS.length){
+    host.innerHTML = '<p class="empty">No bets logged yet. Log a play from the Plays tab, ' +
+      'then come back on Saturday and enter the closing line and the result. Closing line ' +
+      'value is the number that tells you whether the model is finding real edges or noise, ' +
+      'and it tells you that long before the win rate does.</p>';
+    return;
+  }
+
+  var staked = 0, profit = 0, settled = 0, wins = 0, clvSum = 0, clvCount = 0;
+  var strictStaked = 0, strictProfit = 0;
+
+  for (var i = 0; i < BETS.length; i++){
+    var bet = BETS[i];
+    if (bet.result){
+      staked += bet.stake;
+      profit += betProfit(bet);
+      settled++;
+      if (bet.result === "win") wins++;
+      if (bet.strict){ strictStaked += bet.stake; strictProfit += betProfit(bet); }
+    }
+    var clv = clvPoints(bet);
+    if (clv !== null){ clvSum += clv; clvCount++; }
+  }
+
+  var roi = staked ? (profit / staked) * 100 : 0;
+  var strictRoi = strictStaked ? (strictProfit / strictStaked) * 100 : 0;
+
+  var html = '<div class="summary">';
+  html += statHTML(BETS.length + "", "bets logged");
+  html += statHTML(settled ? wins + "-" + (settled - wins) : "0-0", "settled record");
+  html += statHTML("$" + profit.toFixed(2), "profit at $" + UNIT + " units");
+  html += statHTML(signed(roi) + "%", "return on risk");
+  html += statHTML(clvCount ? signed(clvSum / clvCount, 2) : "-", "average CLV, points");
+  html += statHTML(strictStaked ? signed(strictRoi) + "%" : "-", "return on 3+ pt plays");
+  html += "</div>";
+
+  html += "<table><thead><tr><th>Bet</th><th>Price</th><th>Gap</th><th>EV</th>" +
+          "<th>Close</th><th>CLV</th><th>Result</th><th>P/L</th><th></th></tr></thead><tbody>";
+  for (var j = 0; j < BETS.length; j++){ html += logRow(BETS[j], j); }
+  html += "</tbody></table>";
+  html += '<div class="warn">Enter the number FanDuel closed at, not the one you took. ' +
+          'Positive CLV means you beat the close. Sustained positive CLV is the only ' +
+          'early evidence that the edges are real, and it shows up long before the record does.</div>';
+  host.innerHTML = html;
+}
+
+function statHTML(value, label){
+  return '<div class="stat"><div class="v">' + esc(value) + '</div><div class="l">' +
+         esc(label) + "</div></div>";
+}
+
+/* ------------------------------------------------------------ boot */
+
+renderSampleBar();
+renderChrome();
+renderPlays();
+renderBoard();
+</script>
+</body>
+</html>
