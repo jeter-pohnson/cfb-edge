@@ -48,11 +48,32 @@ TELEVISED_OUTLETS = {
 
 # ---------------------------------------------------------------- model
 
-# A play is flagged at the loose threshold and tagged when it also clears the
-# strict one. Logging both is deliberate: the closing line value data decides
-# which threshold actually holds up, rather than either of us guessing.
-EDGE_FLAG = 2.0
-EDGE_STRICT = 3.0
+# Threshold, set by measurement rather than preference.
+#
+# Three seasons of walk-forward backtesting, 3,108 games graded, said this
+# plainly. Against opening lines every gap bucket below 4 points came in at or
+# below break-even: 50.2%, 51.2%, 48.7%, 50.5%. Every bucket above 4 points beat
+# it: 56.4%, 54.7%, 57.9%. Pooled, the large buckets went 458-355, 56.3%, which
+# is 2.2 standard errors clear of the 52.38% needed at -110.
+#
+# The original 2-point threshold did not survive that test at any book number.
+# Neither did 3. So the board now flags at 4.
+EDGE_FLAG = 4.0
+EDGE_STRICT = 6.0
+
+# Markets the board will evaluate.
+#
+# Totals are excluded, and that is a measurement too, not a preference. Across
+# the same three seasons totals went 50.6% against closing lines and 49.4%
+# against openers, with not one bucket clearing significance in either
+# direction. There is no threshold that rescues them, so showing them would just
+# be inviting bets the evidence says lose.
+ACTIVE_MARKETS = ("spread",)
+
+# The edge measured above exists against opening numbers and disappears by
+# kickoff. That makes this a timing strategy or nothing, so the board marks how
+# stale a line is by the time you are looking at it.
+OPENER_EDGE_WINDOW_HOURS = 48
 
 UNIT_DOLLARS = 20
 

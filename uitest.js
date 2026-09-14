@@ -170,5 +170,18 @@ const r = pooled.w / n;
 const se = Math.sqrt(r * (1 - r) / n) * 100;
 check('pooled opener error bar under 1.6 points', se < 1.6);
 
+// --- the board must obey what the backtest found
+const allEdges = data.games.flatMap(g => g.edges);
+check('only spreads are flagged', allEdges.every(e => e.market === 'spread'));
+check('nothing under the 4 point threshold flags',
+      allEdges.every(e => e.gap >= data.thresholds.flag));
+check('threshold is 4 points', data.thresholds.flag === 4);
+win.showView('plays');
+const banner = q('v-plays').innerHTML;
+check('board states what it is testing', banner.indexOf('What this board is now testing') > -1);
+check('board states the honest caveat', banner.indexOf('standard errors') > -1);
+win.showView('method');
+check('method explains what changed', q('v-method').innerHTML.indexOf('What changed, and why') > -1);
+
 check('no runtime errors', errors.length === 0);
 if (errors.length) console.log(errors.slice(0,5));

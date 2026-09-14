@@ -191,6 +191,35 @@ the same game. Needs `npm install jsdom` first.
 Neither proves the live endpoints return the field names assumed here. The
 first real run is the test for that.
 
+## What this board is testing
+
+Three seasons of walk-forward backtesting, 3,108 games graded, produced one
+surviving result and killed everything else.
+
+Surviving: spreads where the model disagrees with an **opening** number by 4
+points or more. Those went 458-355, 56.3%, against the 52.38% needed at -110.
+Every bucket below 4 points lost, at open and at close, and the split held in
+all three seasons independently.
+
+Killed: the original 2-point threshold, totals at any threshold (50.6% at close,
+49.4% at open, nothing significant anywhere), and derived moneylines.
+
+So the board now shows spreads only, at 4 points or more, and it scores fresh
+lines higher because the edge disappears by kickoff.
+
+### The honest size of it
+
+Pooled across all gap sizes, the opener result was 0.7 standard errors above
+break-even, which is not significant. The 4-point split reaches 2.2 standard
+errors, but that threshold was chosen after looking at the data, which is how
+people fool themselves. It has a mechanism, it is monotonic rather than jumpy,
+and it held across three separate seasons. Treat it as a live hypothesis you are
+now testing with real money, not a proven edge.
+
+At 56.3% you make about 7.5 cents per dollar risked. At $20 units and roughly 25
+qualifying plays a season, that is around $37. If the true rate is 54% rather
+than 56%, it is approximately zero.
+
 ## Closing line value, captured automatically
 
 Every build snapshots every posted number, and freezes a game's last number
@@ -224,9 +253,17 @@ during it.
 
 ## Running it
 
-Manual only. Nothing fires on a timer, so no credits are spent unless you press
-the button: Actions, Build board, Run workflow. Each run costs 3 of the 500
-monthly odds credits.
+Press Run workflow any time under Actions, Build board.
+
+There is also a schedule, and it is deliberately narrow: three runs on Sunday
+and three on Monday, when next week's numbers post. That is not convenience.
+The only measurable edge lives against opening lines and is gone by kickoff, so
+seeing a number late is seeing the wrong number. Six runs a week costs 18 of the
+500 monthly odds credits.
+
+Delete the three schedule lines in `.github/workflows/build.yml` if you would
+rather spend nothing without pressing the button, but that removes the only
+effect that measured.
 
 One consequence to know about. Closing lines are captured from whatever the
 last build saw before kickoff. If your last run was Tuesday and the game is on

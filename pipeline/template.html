@@ -538,12 +538,24 @@ function renderPlays(){
   for (var i = 0; i < entries.length; i++){ if (entries[i].edge.strict) strict++; }
 
   var t = DATA.tiers || {};
-  var html = '<div class="warn">' + entries.length + " plays clear the 2 point flag, " +
-    strict + " of them also clear 3. Graded A " + (t.A || 0) + ", B " + (t.B || 0) +
-    ", C " + (t.C || 0) + ", D " + (t.D || 0) + ". Sorted by confidence, which measures " +
-    "how much the tool trusts its own number rather than how likely the bet is to win. " +
-    "The model's error on a single game is " + num((DATA.model || {}).margin_sigma) +
-    " points, so anything graded C or D has a gap sitting inside that noise.</div>";
+  var th = DATA.thresholds || {};
+  var html = '<div class="warn"><b>What this board is now testing.</b> ' +
+    "Three seasons of walk-forward backtesting, 3,108 games, found exactly one " +
+    "thing that survived: spreads where the model disagrees with an OPENING " +
+    "number by 4 points or more went 458-355, 56.3%, against the 52.4% needed. " +
+    "Every gap under 4 points lost, at open and at close. Totals lost at every " +
+    "threshold and are no longer flagged at all. So the board shows spreads " +
+    "only, at " + (th.flag || 4) + " points or more, and rewards fresh lines " +
+    "because the edge is gone by kickoff.</div>";
+  html += '<div class="warn">' + entries.length + " plays qualify, " + strict +
+    " of them clearing " + (th.strict || 6) + " points. Graded A " + (t.A || 0) +
+    ", B " + (t.B || 0) + ", C " + (t.C || 0) + ", D " + (t.D || 0) +
+    ". Honest caveat on the whole thing: pooled across all gap sizes the opener " +
+    "result was only 0.7 standard errors above break-even, and the 4-point " +
+    "threshold was picked after seeing the data. It has a mechanism and it held " +
+    "in all three seasons, but it is a hypothesis you are now testing with real " +
+    "money, not a proven edge. Log every play and let the closing line value " +
+    "answer it.</div>";
 
   for (var j = 0; j < entries.length; j++){ html += playHTML(entries[j]); }
   host.innerHTML = html;
@@ -1091,14 +1103,36 @@ function renderMethod(){
     html += "<p>Not measured this run. " + esc(kn.note || "") + "</p>";
   }
 
-  html += "<h3>What is being tested this season</h3>";
-  html += "<p>Two things are flagged but deliberately scored as zero, because " +
-    "assuming the answer would defeat the purpose. Openers are marked but not " +
-    "rewarded, even though betting early into soft numbers is the most repeated " +
-    "advice in the literature. And confidence grades are recorded on every " +
-    "logged bet without being trusted. The bet log splits closing line value by " +
-    "both, so by December the data says whether either is real. If graded A " +
-    "plays do not beat graded C plays, the weights are wrong and should change.</p>";
+  html += "<h3>What changed, and why</h3>";
+  html += '<p class="lead">The board started at a 2 point threshold across ' +
+    "spreads, totals and moneylines. The tables above killed all three of those " +
+    "choices, so they were changed rather than defended.</p>";
+  html += "<p><b>Threshold raised from 2 to 4 points.</b> Against opening " +
+    "numbers, every bucket below 4 points came in at or below break-even, and " +
+    "every bucket above it beat break-even. That is a threshold with a clean " +
+    "break, not scatter, and it held in all three seasons.</p>";
+  html += "<p><b>Totals removed entirely.</b> 50.6% against closes, 49.4% " +
+    "against openers, nothing significant in either direction at any gap size. " +
+    "No threshold rescues them. Fair totals are still shown on the full board " +
+    "for reference but never produce a flagged play.</p>";
+  html += "<p><b>Moneylines removed.</b> They were derived by pushing the " +
+    "model's own margin through a fixed error band, which reported the spread " +
+    "disagreement twice and wildly overstated upsets on mismatches.</p>";
+  html += "<p><b>Fresh lines now score points.</b> This previously scored zero " +
+    "on the grounds that it was untested. It has been tested and it is the only " +
+    "effect that measured, so it earns weight.</p>";
+  html += "<h3>The honest size of it</h3>";
+  html += "<p>Pooled across all gap sizes the opener result was 53.3% against a " +
+    "52.4% break-even, which is 0.7 standard errors clear. That is not " +
+    "significant. The 4-point split reaches 2.2 standard errors, but it was " +
+    "chosen after looking at the data, which is how people fool themselves. It " +
+    "has a mechanism, it is monotonic rather than jumpy, and it held across " +
+    "three separate seasons. Treat it as a live hypothesis, not a result.</p>";
+  html += "<p>Scale, said once. At 56.3% you make roughly 7.5 cents per dollar " +
+    "risked. At " + (DATA.unit || 20) + " dollar units and maybe 25 qualifying " +
+    "plays a season that is around 37 dollars. If the true rate is 54% rather " +
+    "than 56% it is approximately zero. The case for this tool is the process " +
+    "and the record, not the money.</p>";
 
   html += "<h3>How confidence is scored</h3>";
   html += "<p>Confidence is not the chance of winning, which is the cover " +
@@ -1423,8 +1457,8 @@ function clvSplits(){
     "Graded C or D": function(b){ return b.grade === "C" || b.grade === "D"; },
     "Openers": function(b){ return !!b.opener; },
     "Settled lines": function(b){ return !b.opener; },
-    "Cleared 3 pts": function(b){ return !!b.strict; },
-    "2 to 3 pts only": function(b){ return !b.strict; }
+    "Cleared 6 pts": function(b){ return !!b.strict; },
+    "4 to 6 pts only": function(b){ return !b.strict; }
   };
 
   var out = [];

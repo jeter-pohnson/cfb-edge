@@ -52,6 +52,11 @@ MIN_SAMPLE = 60
 # small to separate a real half-point edge from nothing at all.
 SEASONS_TO_GRADE = 3
 
+# Bumped whenever the method changes. A cached result produced by different code
+# is not a saving, it is a stale answer wearing a fresh timestamp, and it already
+# cost one wasted run that looked like a real result.
+METHOD_VERSION = 4
+
 
 def _bucket_label(low, high):
     return "%d+" % low if high >= 99 else "%d to %d" % (low, high)
@@ -63,6 +68,8 @@ def load_cached(target_year):
             return None
         with open(PATH) as fh:
             payload = json.load(fh)
+        if payload.get("method_version") != METHOD_VERSION:
+            return None
         return payload if payload.get("target_year") == target_year else None
     except (OSError, ValueError):
         return None
@@ -284,6 +291,7 @@ def run(target_year, seasons=SEASONS_TO_GRADE, force=False):
     payload = {
         "available": graded > 0,
         "method": "walk-forward, pooled across seasons",
+        "method_version": METHOD_VERSION,
         "target_year": target_year,
         "seasons_graded": seasons,
         "years": years_used,

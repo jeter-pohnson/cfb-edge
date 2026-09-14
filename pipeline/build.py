@@ -130,7 +130,8 @@ def score_game(home_row, away_row, posted, neutral, model):
                           % abs(float(fair_total) - float(posted["total"])))
 
     # ---- spread
-    line = posted.get("spread") if spread_ok else None
+    line = (posted.get("spread") if spread_ok else None) \
+        if "spread" in config.ACTIVE_MARKETS else None
     if line is not None and fair_margin is not None:
         gap = abs(float(fair_spread) - float(line))
         home_p, away_p, push = ratings.cover_probability(fair_margin, line, margin_sigma)
@@ -154,7 +155,10 @@ def score_game(home_row, away_row, posted, neutral, model):
             })
 
     # ---- total
-    line = posted.get("total") if total_ok else None
+    # Gated off by ACTIVE_MARKETS. The fair total is still computed and shown on
+    # the full board for reference, it just no longer produces a flagged play.
+    line = (posted.get("total") if total_ok else None) \
+        if "total" in config.ACTIVE_MARKETS else None
     if line is not None and fair_total is not None:
         gap = abs(float(fair_total) - float(line))
         over_p, under_p, push = ratings.over_probability(fair_total, line, total_sigma)

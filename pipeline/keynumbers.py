@@ -26,6 +26,7 @@ PATH = os.path.join(CACHE_DIR, "key_numbers.json")
 MAX_AGE_DAYS = 60
 
 SEASONS_BACK = 3
+METHOD_VERSION = 2
 
 # Margin behaviour differs enormously between a one-score conference game and a
 # 35-point non-conference mismatch, so the distribution is conditioned on the
@@ -63,7 +64,8 @@ def build(season, force=False):
     """Count margins and totals by spread band across recent seasons."""
     if not force:
         cached = load_cached()
-        if cached and cached.get("through_season") == season - 1:
+        if cached and cached.get("through_season") == season - 1 \
+                and cached.get("method_version") == METHOD_VERSION:
             return cached
 
     margins = {}
@@ -110,6 +112,7 @@ def build(season, force=False):
 
     payload = {
         "available": True,
+        "method_version": METHOD_VERSION,
         "through_season": season - 1,
         "seasons": seasons_used,
         "games": games_used,
