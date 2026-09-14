@@ -128,5 +128,30 @@ win.setClosing(0, '-8.5');
 check('typing a closing line overrides stale', win.clvPoints(win.BETS[0]) !== null);
 win.unlogBet(win.BETS[0].key);
 
+// --- confidence breakdown layout must not collide with the generic list rule
+win.showView('plays');
+win.toggleWhy(key);
+const panel = q('w-' + key).innerHTML;
+if (panel.indexOf('conf-parts') > -1){
+  const styles = doc.querySelector('style').textContent;
+  const generic = styles.indexOf('.why-panel li{');
+  const scoped = styles.indexOf('.why-panel ul.conf-parts li{');
+  check('scoped confidence rule loads after the generic one', scoped > generic);
+  check('confidence rows suppress the generic bullet',
+        styles.indexOf('.why-panel ul.conf-parts li:before{display:none}') > -1);
+}
+win.toggleWhy(key);
+
+// --- regressions from the real-board audit
+check('no derived moneyline edges',
+      data.games.every(g => g.edges.every(e => e.market !== 'moneyline')));
+const allBuckets = (data.backtest.spread || []).concat(data.backtest.total || []);
+check('backtest buckets carry a significance verdict',
+      allBuckets.every(b => b.decided < 60 || typeof b.significant === 'boolean'));
+win.showView('method');
+const m2 = q('v-method').innerHTML;
+check('method shows an all-gaps total row', m2.indexOf('All gaps') > -1);
+check('method reports open vs close', m2.indexOf('OPENING lines') > -1 || m2.indexOf('Opening lines') > -1);
+
 check('no runtime errors', errors.length === 0);
 if (errors.length) console.log(errors.slice(0,5));

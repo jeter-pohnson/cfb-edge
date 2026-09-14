@@ -110,17 +110,11 @@ def resolve(odds_name, index):
     if best:
         return best
 
-    # Last resort: token overlap, requiring a strong majority match.
-    tokens = set(norm.split())
-    best_score = 0.0
-    for candidate_norm, school in index.items():
-        cand_tokens = set(candidate_norm.split())
-        if not cand_tokens:
-            continue
-        overlap = len(tokens & cand_tokens) / len(cand_tokens)
-        if overlap > best_score:
-            best_score = overlap
-            best = school
-    if best_score >= 0.85:
-        return best
+    # Deliberately no fuzzy fallback. Token-overlap matching was attaching FCS
+    # opponents to whatever FBS school looked closest, so North Dakota State
+    # became a rated team and Alabama A&M inherited Alabama's rating and showed
+    # up as Alabama playing twice on the same afternoon. A missed match costs
+    # one game off the board. A wrong match puts a fictional number in front of
+    # you and grades it. Unmatched names are reported at build time so real
+    # gaps can be fixed with an alias.
     return None

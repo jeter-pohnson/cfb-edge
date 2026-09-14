@@ -175,47 +175,18 @@ def score_game(home_row, away_row, posted, neutral, model):
                 "fair": round(float(fair_total), 2),
             })
 
-    # ---- moneyline, derived from the same margin distribution
-    home_ml = posted.get("home_ml")
-    away_ml = posted.get("away_ml")
-    shape_ok = (
-        spread_ok
-        and posted.get("spread") is not None
-        and fair_spread is not None
-        and abs(float(fair_spread) - float(posted["spread"])) <= config.ML_SHAPE_TOLERANCE
-    )
-    if shape_ok and home_ml is not None and away_ml is not None and fair_margin is not None:
-        model_home = ratings.phi(fair_margin / margin_sigma) if margin_sigma else None
-        fair_home, fair_away = odds_client.devig_pair(home_ml, away_ml)
-
-        # FanDuel's own spread and moneyline should quote the same game. When
-        # they do not, one of the two is stale in the feed and the disagreement
-        # is a plumbing artefact rather than an edge.
-        if fair_home is not None:
-            quoted = ratings.implied_margin(fair_home, margin_sigma)
-            posted_margin = -float(posted["spread"])
-            if quoted is None or abs(quoted - posted_margin) > config.ML_SHAPE_TOLERANCE:
-                review.append("moneyline and spread disagree by %.1f pts, price looks stale"
-                              % abs((quoted or 0) - posted_margin))
-                fair_home = None
-
-        if model_home is not None and fair_home is not None:
-            for side, team, prob, market_prob, price in (
-                ("home", home_row["school"], model_home, fair_home, home_ml),
-                ("away", away_row["school"], 1.0 - model_home, fair_away, away_ml),
-            ):
-                ev = ratings.expected_value(prob, 0.0, price)
-                if (ev is not None and ev > 0
-                        and prob - market_prob > config.ML_MIN_PROB_EDGE):
-                    edges.append({
-                        "market": "moneyline", "side": side, "team": team,
-                        "line": _fmt_price(price), "price": price,
-                        "gap": round((prob - market_prob) * 100, 1),
-                        "prob": prob, "push": 0.0, "ev": ev,
-                        "strict": (prob - market_prob) >= 0.05,
-                        "keys": [],
-                        "fair": odds_client.probability_to_american(prob),
-                    })
+    # ---- moneyline: deliberately not scored.
+    #
+    # It was derived by pushing the model's own margin through a fixed error
+    # band, which does two bad things at once. It reports the same spread
+    # disagreement a second time as if it were independent evidence, and on
+    # large mismatches a 17 point error band wildly overstates the chance of an
+    # upset, which is how a 30-to-1 longshot came out showing plus 93 percent
+    # expected value. Those were not edges, they were the model's error
+    # amplified and then double counted.
+    #
+    # A real moneyline model needs its own win-probability fit, not a spread
+    # wearing a different hat.
 
     return {
         "fair_spread": round(float(fair_spread), 2) if fair_spread is not None else None,

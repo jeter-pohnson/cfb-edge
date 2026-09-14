@@ -183,15 +183,6 @@ tbody tr:hover{background:var(--panel)}
 .grade.D{color:var(--fade)}
 .conf .lbl{font-size:13px;font-weight:600}
 .conf .num{font-size:12px;color:var(--muted)}
-.conf-parts{margin-top:6px}
-.conf-parts li{
-  font-size:13px;color:var(--muted);padding:3px 0 3px 42px;position:relative;line-height:1.45;
-}
-.conf-parts li span.pts{
-  position:absolute;left:0;width:34px;text-align:right;font-weight:700;font-size:12.5px;
-}
-.conf-parts li span.up{color:var(--play)}
-.conf-parts li span.down{color:var(--fade)}
 .movement{font-size:12.5px;color:var(--muted);margin-top:7px}
 
 /* ---------------------------------------------------------- writeup */
@@ -214,6 +205,21 @@ tbody tr:hover{background:var(--panel)}
 }
 .why-panel .against h4{color:var(--fade)}
 .why-panel .against li:before{background:var(--fade)}
+/* Scoped to beat the generic .why-panel li rule above, which sets a 16px
+   indent that the absolutely positioned points column was colliding with. */
+.why-panel ul.conf-parts{margin-top:6px}
+.why-panel ul.conf-parts li{
+  font-size:13px;color:var(--muted);line-height:1.45;
+  padding:4px 0 4px 52px;position:relative;
+}
+.why-panel ul.conf-parts li:before{display:none}
+.why-panel ul.conf-parts li span.pts{
+  position:absolute;left:0;top:4px;width:42px;text-align:right;
+  font-weight:700;font-size:12.5px;font-variant-numeric:tabular-nums;
+}
+.why-panel ul.conf-parts li span.up{color:var(--play)}
+.why-panel ul.conf-parts li span.down{color:var(--fade)}
+.why-panel ul.conf-parts li span.zero{color:var(--muted)}
 .inj{margin-top:12px;font-size:13px}
 .inj table{width:100%;font-size:12.5px;margin-top:4px}
 .inj td{padding:3px 6px;border-bottom:1px solid var(--rule);text-align:left}
@@ -694,7 +700,7 @@ function whyHTML(game, edge){
     html += '<ul class="conf-parts">';
     for (var c = 0; c < conf.parts.length; c++){
       var part = conf.parts[c];
-      var cls = part.points > 0 ? "up" : "down";
+      var cls = part.points > 0 ? "up" : (part.points < 0 ? "down" : "zero");
       html += '<li><span class="pts ' + cls + '">' +
               (part.points > 0 ? "+" : "") + part.points + "</span>" +
               esc(part.reason) + "</li>";
@@ -882,24 +888,51 @@ function renderTeamList(){
 function backtestTable(rows, title){
   var html = "<h3>" + esc(title) + "</h3><table class=\"bt\"><thead><tr>" +
              "<th>Gap in points</th><th>Won</th><th>Lost</th><th>Push</th>" +
-             "<th>Hit rate</th><th>vs break-even</th></tr></thead><tbody>";
+             "<th>Hit rate</th><th>vs break-even</th><th>Verdict</th>" +
+             "</tr></thead><tbody>";
+  var totalWins = 0, totalLosses = 0;
+
   for (var i = 0; i < rows.length; i++){
     var row = rows[i];
+    totalWins += row.wins; totalLosses += row.losses;
     var thin = row.decided < 60;
     html += "<tr><td>" + esc(row.bucket) + "</td>";
     html += "<td>" + row.wins + "</td><td>" + row.losses + "</td><td>" + row.pushes + "</td>";
+
     if (row.rate === null){
-      html += '<td colspan="2" style="color:var(--muted)">no games</td>';
+      html += '<td colspan="3" style="color:var(--muted)">no games</td>';
     } else if (thin){
-      html += "<td>" + pct(row.rate) + '</td><td style="color:var(--muted)">' +
-              "sample too thin to use</td>";
+      html += "<td>" + pct(row.rate) + '</td><td colspan="2" ' +
+              'style="color:var(--muted)">sample too thin</td>';
     } else {
       var good = row.edge_vs_breakeven > 0;
       html += '<td class="' + (good ? "good" : "bad") + '">' + pct(row.rate) + "</td>";
       html += '<td class="' + (good ? "good" : "bad") + '">' +
               signed(row.edge_vs_breakeven) + " pts</td>";
+      // Above break-even is not the same as evidence. Being inside the error
+      // bar is the usual case and needs saying out loud.
+      if (row.significant){
+        html += '<td class="good">beats chance</td>';
+      } else if (row.edge_vs_breakeven > 0){
+        html += '<td style="color:var(--muted)">inside noise, +/-' +
+                num(2 * (row.stderr || 0)) + " pts</td>";
+      } else {
+        html += '<td class="bad">loses</td>';
+      }
     }
     html += "</tr>";
+  }
+
+  var decided = totalWins + totalLosses;
+  if (decided){
+    html += '<tr style="border-top:2px solid var(--ink)"><td><b>All gaps</b></td>';
+    html += "<td><b>" + totalWins + "</b></td><td><b>" + totalLosses +
+            "</b></td><td></td>";
+    var overall = totalWins / decided;
+    var cls = overall > 0.5238 ? "good" : "bad";
+    html += '<td class="' + cls + '"><b>' + pct(overall) + "</b></td>";
+    html += '<td class="' + cls + '"><b>' + signed((overall - 0.5238) * 100) +
+            " pts</b></td><td></td></tr>";
   }
   return html + "</tbody></table>";
 }
@@ -959,12 +992,30 @@ function renderMethod(){
       "margins alone, which is a simpler object than the SP+ the live board " +
       "uses. So this is still a proxy, and a mildly pessimistic one, but it is " +
       "built the same structural way and fed the same kind of information.</p>";
-    html += backtestTable(bt.spread || [], "Spread, by size of disagreement");
-    html += backtestTable(bt.total || [], "Totals, by size of disagreement");
-    html += "<p style=\"margin-top:12px\">Where a bucket has a usable sample, " +
-      "its measured hit rate replaces the noise estimate in the confidence " +
-      "score. Where it does not, confidence falls back to comparing the gap " +
-      "against the model error and says so in the breakdown.</p>";
+    html += backtestTable(bt.spread || [], "Spread against the CLOSING line");
+    html += backtestTable(bt.total || [], "Totals against the CLOSING line");
+
+    if (bt.openers_available){
+      html += "<h3>The same test against OPENING lines</h3>";
+      html += '<p class="lead">This is the question that matters. A closing ' +
+        "number is the market's verdict after everyone has had their say, and " +
+        "beating it is close to impossible with a public rating system. An " +
+        "opener is the book's own first estimate before the market corrects " +
+        "it. If the model beats openers and not closes, the edge is real but " +
+        "it is a timing edge, and betting Sunday and Monday becomes the whole " +
+        "strategy.</p>";
+      html += backtestTable(bt.spread_open || [], "Spread against the opener");
+      html += backtestTable(bt.total_open || [], "Totals against the opener");
+    } else {
+      html += "<h3>Opening lines</h3><p>The line archive did not return opening " +
+        "numbers for this season, so the opener comparison could not be run.</p>";
+    }
+
+    html += "<p style=\"margin-top:12px\">A bucket only feeds the confidence " +
+      "score when it beats break-even by more than two standard errors. Above " +
+      "break-even but inside the error bar earns nothing, because a few points " +
+      "of surplus on a couple of hundred games is what a coin flip looks like. " +
+      "Buckets that measurably lost money now subtract from confidence.</p>";
   } else {
     html += "<p>The backtest did not run. " + esc(bt.note || "") +
             " Confidence is falling back to noise estimates, which are " +

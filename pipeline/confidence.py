@@ -18,6 +18,10 @@ from . import backtest, config, keynumbers
 # Confidence starts here and moves on evidence.
 BASE = 50
 
+# Highest score reachable when the gap size has no measured history. Sits at
+# the top of grade B on purpose.
+UNVERIFIED_CEILING = 74
+
 TIERS = [
     (78, "A", "High"),
     (64, "B", "Solid"),
@@ -38,8 +42,12 @@ def score_edge(game, edge, home, away, model, drivers, move,
     """Return a confidence score, tier and the components that produced it."""
     parts = []
 
-    def add(points, reason):
-        if points:
+    def add(points, reason, always=False):
+        # Zero-point components are dropped by default to keep the breakdown
+        # readable, but some of them are the most important thing on the list.
+        # "This bucket is indistinguishable from a coin flip" is worth nothing
+        # to the score and everything to the reader.
+        if points or always:
             parts.append({"points": points, "reason": reason})
 
     # ---- how big is the edge, measured against history where possible
@@ -47,28 +55,62 @@ def score_edge(game, edge, home, away, model, drivers, move,
     measured = backtest.rate_for_gap(report, edge["market"], edge["gap"]) \
         if edge["market"] in ("spread", "total") else None
 
+    unverified = False
+
     if measured:
-        # The historical record for this gap size is the strongest evidence
-        # available, so it replaces the noise heuristic rather than adding to it.
         surplus = measured["rate"] - backtest.BREAK_EVEN
-        points = int(round(max(-22, min(22, surplus * 260))))
-        add(points,
-            "Gaps of %s points went %d-%d against the closing line last season, "
-            "a %.1f%% hit rate against the %.1f%% you need to break even"
-            % (measured["bucket"], measured["wins"], measured["losses"],
-               measured["rate"] * 100, backtest.BREAK_EVEN * 100))
+        stderr = measured.get("stderr")
+        if measured.get("significant"):
+            # Beat break-even by more than two standard errors. This is the
+            # only case that earns positive points from history.
+            points = int(round(max(-22, min(22, surplus * 260))))
+            add(points,
+                "Gaps of %s points went %d-%d against the closing line, a %.1f%% "
+                "hit rate against the %.1f%% needed, and the margin is larger "
+                "than the sampling error"
+                % (measured["bucket"], measured["wins"], measured["losses"],
+                   measured["rate"] * 100, backtest.BREAK_EVEN * 100))
+        elif surplus < 0:
+            # Measurably below break-even. Penalise it.
+            points = int(round(max(-22, surplus * 260)))
+            add(points,
+                "Gaps of %s points went %d-%d against the closing line, a %.1f%% "
+                "hit rate against the %.1f%% needed. This gap size lost money "
+                "historically"
+                % (measured["bucket"], measured["wins"], measured["losses"],
+                   measured["rate"] * 100, backtest.BREAK_EVEN * 100))
+            unverified = True
+        else:
+            # Above break-even but inside the error bar. That is not evidence,
+            # and treating it as evidence is how a coin flip becomes a grade A.
+            add(0,
+                "Gaps of %s points went %d-%d, a %.1f%% hit rate. That is above "
+                "break-even but within %.1f points of sampling error, so it is "
+                "indistinguishable from chance and earns nothing"
+                % (measured["bucket"], measured["wins"], measured["losses"],
+                   measured["rate"] * 100, (stderr or 0) * 2),
+                always=True)
+            unverified = True
     elif sigma and edge["market"] in ("spread", "total"):
+        # No historical sample for this gap size. A large disagreement is then
+        # just as likely to be the model being wrong as the market being wrong,
+        # so the upside is deliberately smaller than the measured version and
+        # the grade gets capped below A further down. Paying a big bonus for a
+        # disagreement you cannot verify is how a tool talks itself into its
+        # own worst bets.
         ratio = edge["gap"] / sigma
+        unverified = True
         if ratio >= 0.40:
-            add(18, "Gap is %.0f%% of the model's own error, which is a large "
-                    "disagreement. No historical sample for this bucket, so "
-                    "this is a noise estimate rather than a measurement"
+            add(10, "Gap is %.0f%% of the model's own error, a large "
+                    "disagreement. No historical sample for gaps this size, so "
+                    "this is reasoning rather than evidence, and a gap this big "
+                    "is as easily the model being wrong as the market being wrong"
                     % (ratio * 100))
         elif ratio >= 0.28:
-            add(11, "Gap is %.0f%% of the model's own error, estimated from "
-                    "noise rather than measured" % (ratio * 100))
+            add(7, "Gap is %.0f%% of the model's own error, estimated from "
+                   "noise rather than measured" % (ratio * 100))
         elif ratio >= 0.18:
-            add(4, "Gap is %.0f%% of the model's own error, estimated from "
+            add(3, "Gap is %.0f%% of the model's own error, estimated from "
                    "noise rather than measured" % (ratio * 100))
         else:
             add(-8, "Gap is only %.0f%% of the model's own error, so it is well "
@@ -106,11 +148,10 @@ def score_edge(game, edge, home, away, model, drivers, move,
         # piece of advice in the literature, and it is also completely untested
         # here. Flagging it and splitting the bet log by it is how we find out,
         # rather than baking someone else's conclusion into the weights.
-        parts.append({"points": 0,
-                      "reason": "Opener, first time the board has seen this "
-                                "line. Scored as neutral on purpose: whether "
-                                "early numbers are softer is what your closing "
-                                "line value data is being collected to answer"})
+        add(0, "Opener, first time the board has seen this line. Scored as "
+               "neutral on purpose: whether early numbers are softer is what "
+               "your closing line value data is being collected to answer",
+            always=True)
     else:
         toward = _moving_toward_us(edge, delta)
         if toward is None:
@@ -162,6 +203,18 @@ def score_edge(game, edge, home, away, model, drivers, move,
 
     score = BASE + sum(part["points"] for part in parts)
     score = max(1, min(99, score))
+
+    # An A grade is a claim that the tool is confident, and confidence without
+    # a measurement behind it is just assertion. Unverified gaps cannot grade A.
+    if unverified and score > UNVERIFIED_CEILING:
+        parts.append({
+            "points": UNVERIFIED_CEILING - score,
+            "reason": "Capped below grade A because the gap size has no "
+                      "historical record behind it. The tool is not allowed to "
+                      "be its most confident on evidence it does not have",
+        })
+        score = UNVERIFIED_CEILING
+
     grade, label = _tier(score)
 
     return {

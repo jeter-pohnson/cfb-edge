@@ -174,15 +174,22 @@ def _closing_lines(year):
             chosen = lines[0]
         if chosen is None:
             continue
-        try:
-            spread = chosen.get("spread")
-            total = chosen.get("overUnder", chosen.get("over_under"))
-            out[(home, away)] = {
-                "spread": float(spread) if spread is not None else None,
-                "total": float(total) if total is not None else None,
-            }
-        except (TypeError, ValueError):
-            continue
+        def pick(*keys):
+            for key in keys:
+                value = chosen.get(key)
+                if value is not None:
+                    try:
+                        return float(value)
+                    except (TypeError, ValueError):
+                        return None
+            return None
+
+        out[(home, away)] = {
+            "spread": pick("spread"),
+            "total": pick("overUnder", "over_under"),
+            "spread_open": pick("spreadOpen", "spread_open"),
+            "total_open": pick("overUnderOpen", "over_under_open"),
+        }
     return out
 
 
@@ -225,13 +232,18 @@ def run(target_year, force=False):
     lines = _closing_lines(target_year)
     weeks = sorted({g["week"] for g in games})
 
-    spread_buckets = {_bucket_label(a, b): {"wins": 0, "losses": 0, "pushes": 0}
-                      for a, b in BUCKETS}
-    total_buckets = {_bucket_label(a, b): {"wins": 0, "losses": 0, "pushes": 0}
-                     for a, b in BUCKETS}
+    def fresh():
+        return {_bucket_label(a, b): {"wins": 0, "losses": 0, "pushes": 0}
+                for a, b in BUCKETS}
+
+    books = {
+        "spread_close": fresh(), "total_close": fresh(),
+        "spread_open": fresh(), "total_open": fresh(),
+    }
     margin_residuals, total_residuals = [], []
     graded = 0
     weeks_used = 0
+    opener_rows = 0
 
     for week in weeks:
         if week < FIRST_GRADED_WEEK:
@@ -259,25 +271,33 @@ def run(target_year, force=False):
                          + (0.0 if game["neutral"] else hfa))
             margin_residuals.append(game["margin"] - predicted)
 
-            if market.get("spread") is not None:
-                posted = market["spread"]
-                fair_spread = -predicted
+            fair_spread = -predicted
+            for key, bucket in (("spread", "spread_close"),
+                                ("spread_open", "spread_open")):
+                posted = market.get(key)
+                if posted is None:
+                    continue
+                if key == "spread_open":
+                    opener_rows += 1
                 gap = abs(fair_spread - posted)
                 result = (game["margin"] + posted) if fair_spread < posted \
                     else -(game["margin"] + posted)
-                _record(spread_buckets, gap, result)
+                _record(books[bucket], gap, result)
 
             if offence is not None and game["home"] in offence and game["away"] in offence:
                 predicted_total = (offence[game["home"]] + defence[game["away"]]
                                    + offence[game["away"]] + defence[game["home"]]
                                    + base)
                 total_residuals.append(game["total"] - predicted_total)
-                if market.get("total") is not None:
-                    posted = market["total"]
+                for key, bucket in (("total", "total_close"),
+                                    ("total_open", "total_open")):
+                    posted = market.get(key)
+                    if posted is None:
+                        continue
                     gap = abs(predicted_total - posted)
                     result = (game["total"] - posted) if predicted_total > posted \
                         else (posted - game["total"])
-                    _record(total_buckets, gap, result)
+                    _record(books[bucket], gap, result)
 
     payload = {
         "available": graded > 0,
@@ -286,8 +306,12 @@ def run(target_year, force=False):
         "graded": graded,
         "weeks_used": weeks_used,
         "first_week": FIRST_GRADED_WEEK,
-        "spread": _summarise(spread_buckets),
-        "total": _summarise(total_buckets),
+        "spread": _summarise(books["spread_close"]),
+        "total": _summarise(books["total_close"]),
+        "spread_open": _summarise(books["spread_open"]),
+        "total_open": _summarise(books["total_open"]),
+        "openers_available": opener_rows > 100,
+        "opener_rows": opener_rows,
         "break_even": BREAK_EVEN,
         "oos_margin_sigma": round(_sigma(margin_residuals), 2) if margin_residuals else None,
         "oos_total_sigma": round(_sigma(total_residuals), 2) if total_residuals else None,
@@ -326,11 +350,25 @@ def _summarise(buckets):
         row = buckets[key]
         decided = row["wins"] + row["losses"]
         rate = (row["wins"] / decided) if decided else None
+
+        # Standard error of the hit rate. Without this, a bucket sitting three
+        # points above break-even on 120 games looks like evidence when it is
+        # one coin-flip run. Requiring two standard errors is what stops the
+        # confidence score from treating noise as measurement, which is exactly
+        # what it was doing.
+        stderr = None
+        significant = False
+        if rate is not None and decided >= MIN_SAMPLE:
+            stderr = math.sqrt(rate * (1.0 - rate) / decided)
+            significant = (rate - BREAK_EVEN) > 2.0 * stderr
+
         out.append({
             "bucket": key, "low": low, "high": high,
             "wins": row["wins"], "losses": row["losses"], "pushes": row["pushes"],
             "decided": decided,
             "rate": round(rate, 4) if rate is not None else None,
+            "stderr": round(stderr * 100, 2) if stderr is not None else None,
+            "significant": significant,
             "edge_vs_breakeven": round((rate - BREAK_EVEN) * 100, 2)
                                  if rate is not None else None,
         })
@@ -338,6 +376,12 @@ def _summarise(buckets):
 
 
 def rate_for_gap(report, market, gap):
+    """The measured record for a gap size, or None when the sample is too thin.
+
+    Returns the row whether or not it is statistically significant. The caller
+    decides what to do with an insignificant result, because "measured and
+    indistinguishable from a coin flip" is itself information worth showing.
+    """
     if not report or not report.get("available"):
         return None
     rows = report.get("spread" if market != "total" else "total") or []
