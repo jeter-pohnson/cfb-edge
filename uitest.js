@@ -193,5 +193,27 @@ const playsHtml = q('v-plays').innerHTML;
 check('labels quote the live threshold',
       !data.games.some(g => g.edges.length) || playsHtml.indexOf('pts') > -1);
 
+// --- early season tagged, not suppressed
+const early = data.games.filter(g => g.early_season);
+if (early.length){
+  check('early-season games still produce plays',
+        data.games.some(g => g.edges.length));
+  win.showView('plays');
+  const ph = q('v-plays').innerHTML;
+  check('early-season tag is visible', ph.indexOf('early season') > -1);
+  const e0 = early.find(g => g.edges.length);
+  if (e0){
+    const comp = e0.edges[0].confidence.parts.filter(
+      p => p.reason.indexOf('Early season') > -1);
+    check('early season is named but scores zero',
+          comp.length === 1 && comp[0].points === 0);
+    win.logBet(e0.id, e0.edges[0].market, e0.edges[0].side);
+    check('early-season flag stored on the bet', win.BETS[0].early_season === true);
+    const names = win.clvSplits().map(x => x.name);
+    check('bet log splits early season out', names.indexOf('Early season') > -1);
+    win.unlogBet(win.BETS[0].key);
+  }
+}
+
 check('no runtime errors', errors.length === 0);
 if (errors.length) console.log(errors.slice(0,5));

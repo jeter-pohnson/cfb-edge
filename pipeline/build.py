@@ -332,9 +332,9 @@ def main():
     log("Pulling the FanDuel board")
     board = odds_client.fetch_board()
     current_week = _current_week(games_now)
-    if current_week is not None and current_week < config.FIRST_LIVE_WEEK:
-        log("  week %d is before the model is trustworthy (week %d), plays "
-            "suppressed" % (current_week, config.FIRST_LIVE_WEEK))
+    if current_week is not None and current_week < config.EARLY_SEASON_BEFORE_WEEK:
+        log("  week %d is before the backtest grades (week %d), plays will be "
+            "tagged early season" % (current_week, config.EARLY_SEASON_BEFORE_WEEK))
     log("  %d events, %s credits left of the monthly 500"
         % (len(board), odds_client.quota.get("remaining")))
 
@@ -410,17 +410,18 @@ def main():
         scored = score_game(home_row, away_row, posted,
                             info.get("neutral", False), model)
 
-        if current_week is not None and current_week < config.FIRST_LIVE_WEEK:
-            # Fair numbers still render on the full board for reference, but
-            # nothing is flagged as a play. The backtest itself refused to grade
-            # before week 5 because there is not enough played to rate anyone,
-            # and a board that flags plays on ratings the backtest would not
-            # trust is claiming more than the evidence supports.
+        game_week = info.get("week") or current_week
+        early = (game_week is not None
+                 and game_week < config.EARLY_SEASON_BEFORE_WEEK)
+        if early:
             scored["review"].append(
-                "Week %d. Ratings this early are mostly preseason projection, "
-                "and the backtest does not grade before week %d, so no play is "
-                "flagged." % (current_week, config.FIRST_LIVE_WEEK))
-            scored["edges"] = []
+                "Week %d. Ratings this early lean heavily on preseason "
+                "projection and the backtest does not grade before week %d, so "
+                "there is no evidence either way. These plays are flagged but "
+                "tagged early season and tracked separately."
+                % (game_week, config.EARLY_SEASON_BEFORE_WEEK))
+            for edge in scored["edges"]:
+                edge["early_season"] = True
 
         move = history.movement(line_history, posted["odds_id"],
                                 posted["spread"], posted["total"])
@@ -469,6 +470,7 @@ def main():
             },
             "movement": move,
             "opener": bool(move.get("opener")),
+            "early_season": early,
             "best_ev": best_ev,
             "best_gap": best_gap,
             "last_update": posted["last_update"],
@@ -543,7 +545,9 @@ def main():
         "season": config.SEASON,
         "week": min(weeks) if weeks else None,
         "unit": config.UNIT_DOLLARS,
-        "thresholds": {"flag": config.EDGE_FLAG, "strict": config.EDGE_STRICT},
+        "thresholds": {"flag": config.EDGE_FLAG, "strict": config.EDGE_STRICT,
+                       "early_before_week": config.EARLY_SEASON_BEFORE_WEEK},
+        "current_week": current_week,
         "model": {
             "margin_sigma": round(model["margin_sigma"], 2),
             "total_sigma": round(model["total_sigma"], 2) if model["total_sigma"] else None,

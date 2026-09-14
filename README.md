@@ -207,6 +207,19 @@ Killed: the original 2-point threshold, totals at any threshold (50.6% at close,
 So the board now shows spreads only, at 4 points or more, and it scores fresh
 lines higher because the edge disappears by kickoff.
 
+### Early season
+
+Plays before week 5 are flagged but tagged early season and split into their own
+row in the bet log.
+
+The backtest declines to grade before week 5 because too little has been played
+to rate anyone, so there is no evidence the model works that early. But no
+evidence it works is not evidence it fails, and suppressing those plays outright
+would decide the question by assumption. They score no differently, they are
+labelled on the board, and their closing line value is tracked separately. If
+they come back worse, exclude them from the season read rather than letting them
+muddy it.
+
 ### The honest size of it
 
 Pooled across all gap sizes, the opener result was 0.7 standard errors above

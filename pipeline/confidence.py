@@ -195,6 +195,17 @@ def score_edge(game, edge, home, away, model, drivers, move,
         add(min(8, 4 * len(style_notes)),
             "Style mismatch: %s" % style_notes[0])
 
+    # ---- early season
+    if edge.get("early_season"):
+        # Worth zero on purpose. The backtest has nothing to say about plays
+        # this early, so any penalty would be a number I made up, and a made-up
+        # penalty is indistinguishable from a measured one once it is inside a
+        # score. The bet log splits these out instead.
+        add(0, "Early season, before the week the backtest starts grading. "
+               "Ratings lean on preseason projection and there is no evidence "
+               "either way, so this scores nothing and is tracked separately "
+               "in the bet log", always=True)
+
     # ---- market structure
     if game.get("slate") != "power":
         add(-4, "Group of Five game, so a thinner market on both sides")

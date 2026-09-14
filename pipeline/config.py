@@ -75,10 +75,20 @@ ACTIVE_MARKETS = ("spread",)
 # stale a line is by the time you are looking at it.
 OPENER_EDGE_WINDOW_HOURS = 48
 
-# No plays before this week. The walk-forward backtest refuses to grade earlier
-# because too little has been played to rate anyone, and flagging plays on
-# ratings the backtest would not trust claims more than the evidence supports.
-FIRST_LIVE_WEEK = 5
+# Plays before this week are flagged but tagged "early season" rather than
+# suppressed.
+#
+# The reasoning behind the change is worth keeping. The backtest declines to
+# grade before week 5 because too little has been played to rate anyone, so
+# there is no evidence the model works this early. But no evidence it works is
+# not evidence it fails, and suppressing plays outright decides the question by
+# assumption. Tagging them instead lets the closing line value data answer it,
+# which is how every other open question here has been handled.
+#
+# The cost of being wrong is contained: early plays are separated in the bet
+# log, so if they turn out to be worse they can be excluded from the season
+# read rather than contaminating it.
+EARLY_SEASON_BEFORE_WEEK = 5
 
 UNIT_DOLLARS = 20
 

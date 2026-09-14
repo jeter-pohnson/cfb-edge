@@ -474,6 +474,7 @@ function tagsHTML(game, edge){
   }
   if (game.neutral) out.push('<span class="tag">neutral site</span>');
   if (game.slate !== "power") out.push('<span class="tag">G5</span>');
+  if (game.early_season) out.push('<span class="tag k">early season</span>');
   if (NOTES[game.id]) out.push('<span class="tag k">note</span>');
   return out.join("");
 }
@@ -531,9 +532,10 @@ function renderPlays(){
   var host = document.getElementById("v-plays");
 
   if (!entries.length){
-    host.innerHTML = '<p class="empty">No game on the board is more than ' +
-      DATA.thresholds.flag + " points off the model right now. That is a normal " +
-      "result midweek before the full slate posts. Check the full board for the raw numbers.</p>";
+    host.innerHTML = '<p class="empty">No spread on the board is more than ' +
+      DATA.thresholds.flag + " points off the model right now. With a " +
+      DATA.thresholds.flag + " point minimum that is a normal week, not a fault. " +
+      "The full board shows every game with the model's number beside FanDuel's.</p>";
     return;
   }
 
@@ -550,6 +552,20 @@ function renderPlays(){
     "threshold and are no longer flagged at all. So the board shows spreads " +
     "only, at " + (th.flag || 4) + " points or more, and rewards fresh lines " +
     "because the edge is gone by kickoff.</div>";
+  var early = 0;
+  for (var e = 0; e < entries.length; e++){
+    if (entries[e].game.early_season) early++;
+  }
+  if (early){
+    html += '<div class="warn">' + early + " of these are tagged <b>early " +
+      "season</b>, meaning before week " + ((DATA.thresholds || {}).early_before_week || 5) +
+      ". The backtest does not grade that early because too little has been " +
+      "played to rate anyone, so there is no evidence these work and none that " +
+      "they do not. They are shown rather than hidden, scored no differently, " +
+      "and split into their own row in the bet log so their closing line value " +
+      "can be read on its own. If they come back worse, exclude them from the " +
+      "season read rather than letting them muddy it.</div>";
+  }
   html += '<div class="warn">' + entries.length + " plays qualify, " + strict +
     " of them clearing " + (th.strict || 6) + " points. Graded A " + (t.A || 0) +
     ", B " + (t.B || 0) + ", C " + (t.C || 0) + ", D " + (t.D || 0) +
@@ -1249,6 +1265,7 @@ function logBet(gameId, market, side){
     conf_score: (edge.confidence || {}).score || null,
     game_id: game.id,
     opener: !!game.opener,
+    early_season: !!game.early_season,
     seen_hours: (game.movement || {}).seen_for_hours || 0,
     stake: UNIT,
     closing_line: null,
@@ -1461,7 +1478,9 @@ function clvSplits(){
     "Openers": function(b){ return !!b.opener; },
     "Settled lines": function(b){ return !b.opener; },
     "Cleared 6 pts": function(b){ return !!b.strict; },
-    "4 to 6 pts only": function(b){ return !b.strict; }
+    "4 to 6 pts only": function(b){ return !b.strict; },
+    "Early season": function(b){ return !!b.early_season; },
+    "Week 5 onward": function(b){ return !b.early_season; }
   };
 
   var out = [];

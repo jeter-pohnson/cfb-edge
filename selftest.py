@@ -86,7 +86,7 @@ def _synth_games(year, completed):
             # Completed games spread across the season; upcoming games sit in
             # week 8 so the live-week gate is exercised rather than short
             # circuiting the whole board.
-            "id": gid, "week": ((gid % 14) + 1) if completed else 8,
+            "id": gid, "week": ((gid % 14) + 1) if completed else 3,
             "homeTeam": home, "awayTeam": away,
             "neutralSite": False, "conferenceGame": True, "completed": completed,
             "homePoints": home_pts if completed else None,
