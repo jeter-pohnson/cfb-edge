@@ -48,6 +48,10 @@ RIDGE = 6.0
 BUCKETS = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 6), (6, 9), (9, 99)]
 MIN_SAMPLE = 60
 
+# How many completed seasons to pool. One season leaves the opener sample too
+# small to separate a real half-point edge from nothing at all.
+SEASONS_TO_GRADE = 3
+
 
 def _bucket_label(low, high):
     return "%d+" % low if high >= 99 else "%d to %d" % (low, high)
@@ -217,28 +221,124 @@ def _normalise_games(raw):
 # ---------------------------------------------------------------- run
 
 
-def run(target_year, force=False):
+def run(target_year, seasons=SEASONS_TO_GRADE, force=False):
+    """Walk forward through several completed seasons and pool the results.
+
+    Pooling matters more than it sounds. One season of openers gave 553 decided
+    bets and a standard error near 2.1 points, which is wide enough that a real
+    edge of half a point and no edge at all look identical. Three seasons roughly
+    triples the sample and cuts that error bar to around 1.2 points, which is the
+    difference between a result you can act on and one you cannot.
+    """
     if not force:
         cached = load_cached(target_year)
-        if cached:
+        if cached and cached.get("seasons_graded") == seasons:
             return cached
 
+    years = list(range(target_year - seasons + 1, target_year + 1))
+    per_season = []
+    pooled = {"spread_close": _fresh(), "total_close": _fresh(),
+              "spread_open": _fresh(), "total_open": _fresh()}
+    margin_residuals, total_residuals = [], []
+    graded = 0
+    weeks_used = 0
+    opener_rows = 0
+    years_used = []
+
+    for year in years:
+        try:
+            outcome = _grade_season(year)
+        except Exception as exc:  # noqa: BLE001
+            per_season.append({"year": year, "available": False, "note": str(exc)})
+            continue
+        if not outcome:
+            per_season.append({"year": year, "available": False,
+                               "note": "no gradable games"})
+            continue
+
+        years_used.append(year)
+        graded += outcome["graded"]
+        weeks_used += outcome["weeks_used"]
+        opener_rows += outcome["opener_rows"]
+        margin_residuals.extend(outcome["margin_residuals"])
+        total_residuals.extend(outcome["total_residuals"])
+        for book in pooled:
+            for key, row in outcome["books"][book].items():
+                pooled[book][key]["wins"] += row["wins"]
+                pooled[book][key]["losses"] += row["losses"]
+                pooled[book][key]["pushes"] += row["pushes"]
+
+        per_season.append({
+            "year": year,
+            "available": True,
+            "graded": outcome["graded"],
+            "spread_close": _overall(outcome["books"]["spread_close"]),
+            "spread_open": _overall(outcome["books"]["spread_open"]),
+        })
+
+    if not years_used:
+        return {"available": False,
+                "note": "No season between %d and %d produced gradable games."
+                        % (years[0], years[-1])}
+
+    payload = {
+        "available": graded > 0,
+        "method": "walk-forward, pooled across seasons",
+        "target_year": target_year,
+        "seasons_graded": seasons,
+        "years": years_used,
+        "per_season": per_season,
+        "graded": graded,
+        "weeks_used": weeks_used,
+        "first_week": FIRST_GRADED_WEEK,
+        "spread": _summarise(pooled["spread_close"]),
+        "total": _summarise(pooled["total_close"]),
+        "spread_open": _summarise(pooled["spread_open"]),
+        "total_open": _summarise(pooled["total_open"]),
+        "openers_available": opener_rows > 100,
+        "opener_rows": opener_rows,
+        "break_even": BREAK_EVEN,
+        "oos_margin_sigma": round(_sigma(margin_residuals), 2) if margin_residuals else None,
+        "oos_total_sigma": round(_sigma(total_residuals), 2) if total_residuals else None,
+        "note": ("Graded week by week across %s. Each week is predicted using "
+                 "only games played earlier in that same season, so no future "
+                 "result and no cross-season roster assumption enters the "
+                 "prediction." % ", ".join(str(y) for y in years_used)),
+    }
+    _save(payload)
+    return payload
+
+
+def _fresh():
+    return {_bucket_label(a, b): {"wins": 0, "losses": 0, "pushes": 0}
+            for a, b in BUCKETS}
+
+
+def _overall(buckets):
+    wins = sum(r["wins"] for r in buckets.values())
+    losses = sum(r["losses"] for r in buckets.values())
+    decided = wins + losses
+    if not decided:
+        return None
+    rate = wins / decided
+    stderr = math.sqrt(rate * (1.0 - rate) / decided)
+    return {"wins": wins, "losses": losses, "decided": decided,
+            "rate": round(rate, 4), "stderr": round(stderr * 100, 2),
+            "edge_vs_breakeven": round((rate - BREAK_EVEN) * 100, 2),
+            "significant": (rate - BREAK_EVEN) > 2.0 * stderr}
+
+
+def _grade_season(target_year):
     games = _normalise_games(cfbd_client.calibration_games(target_year))
     if len(games) < 200:
-        return {"available": False,
-                "note": "Only %d completed games found for %d."
-                        % (len(games), target_year)}
+        return None
 
     lines = _closing_lines(target_year)
     weeks = sorted({g["week"] for g in games})
 
-    def fresh():
-        return {_bucket_label(a, b): {"wins": 0, "losses": 0, "pushes": 0}
-                for a, b in BUCKETS}
-
     books = {
-        "spread_close": fresh(), "total_close": fresh(),
-        "spread_open": fresh(), "total_open": fresh(),
+        "spread_close": _fresh(), "total_close": _fresh(),
+        "spread_open": _fresh(), "total_open": _fresh(),
     }
     margin_residuals, total_residuals = [], []
     graded = 0
@@ -299,30 +399,14 @@ def run(target_year, force=False):
                         else (posted - game["total"])
                     _record(books[bucket], gap, result)
 
-    payload = {
-        "available": graded > 0,
-        "method": "walk-forward",
-        "target_year": target_year,
+    return {
         "graded": graded,
         "weeks_used": weeks_used,
-        "first_week": FIRST_GRADED_WEEK,
-        "spread": _summarise(books["spread_close"]),
-        "total": _summarise(books["total_close"]),
-        "spread_open": _summarise(books["spread_open"]),
-        "total_open": _summarise(books["total_open"]),
-        "openers_available": opener_rows > 100,
         "opener_rows": opener_rows,
-        "break_even": BREAK_EVEN,
-        "oos_margin_sigma": round(_sigma(margin_residuals), 2) if margin_residuals else None,
-        "oos_total_sigma": round(_sigma(total_residuals), 2) if total_residuals else None,
-        "note": ("Graded week by week through %d. Each week is predicted using "
-                 "only games played earlier in that same season, so no future "
-                 "result and no cross-season roster assumption enters the "
-                 "prediction." % target_year),
+        "books": books,
+        "margin_residuals": margin_residuals,
+        "total_residuals": total_residuals,
     }
-    if payload["available"]:
-        _save(payload)
-    return payload
 
 
 def _sigma(residuals):

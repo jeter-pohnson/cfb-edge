@@ -153,5 +153,22 @@ const m2 = q('v-method').innerHTML;
 check('method shows an all-gaps total row', m2.indexOf('All gaps') > -1);
 check('method reports open vs close', m2.indexOf('OPENING lines') > -1 || m2.indexOf('Opening lines') > -1);
 
+// --- pooled multi-season backtest
+check('backtest pools several seasons', (data.backtest.years || []).length > 1);
+check('per-season breakdown is present', (data.backtest.per_season || []).length > 1);
+const anySeason = (data.backtest.per_season || []).find(x => x.available);
+check('each season reports both close and open',
+      !!(anySeason && anySeason.spread_close && anySeason.spread_open));
+win.showView('method');
+check('method renders the season table', q('v-method').innerHTML.indexOf('Season by season') > -1);
+
+// pooling must actually shrink the error bar versus one season
+const pooled = (data.backtest.spread_open || []).reduce(
+  (a, b) => ({ w: a.w + b.wins, l: a.l + b.losses }), { w: 0, l: 0 });
+const n = pooled.w + pooled.l;
+const r = pooled.w / n;
+const se = Math.sqrt(r * (1 - r) / n) * 100;
+check('pooled opener error bar under 1.6 points', se < 1.6);
+
 check('no runtime errors', errors.length === 0);
 if (errors.length) console.log(errors.slice(0,5));

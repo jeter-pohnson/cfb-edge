@@ -106,33 +106,39 @@ Three checks suppress a play rather than print a fake edge:
 
 The Method tab answers this with numbers rather than assurances.
 
-The build walks forward through last season week by week. To grade week W, team
-ratings are fitted using only games played in weeks 1 to W-1 of that same
-season. No future result enters the prediction, and no cross-season inference is
-made at all, so roster turnover between years is simply not part of the method.
+The build walks forward through the last three completed seasons, week by week.
+To grade week W, ratings are fitted using only games played in weeks 1 to W-1 of
+that same season. No future result enters the prediction and no cross-season
+inference is made, so roster turnover between years is not part of the method.
 
-An earlier version of this used season N-1 ratings to predict season N games.
-That avoided lookahead but measured a model nobody runs, because a year-old
-rating describes a roster that has partly graduated and partly transferred. It
-has been replaced.
+Every bet is graded twice, once against the closing line and once against the
+opening line. That comparison is the point. A closing number is the market's
+verdict after everyone has had their say; an opener is the book's first
+estimate before the market corrects it. A model can plausibly beat the second
+while losing to the first, and if it does, the edge is real but it is a timing
+edge and betting early becomes the whole strategy.
 
-One limit worth knowing: ratings in the backtest are solved from margins alone,
-which is simpler than the SP+ the live board uses. It remains a proxy, and a
-mildly pessimistic one, but it is built the same structural way.
+Three seasons rather than one, because one season left the opener sample near
+550 decided bets and a standard error around 2.1 points. At that width a real
+half-point edge and no edge at all look identical. Pooling roughly triples the
+sample and cuts the error bar to about 1.2 points.
 
-The backtest also produces the model's error out of sample, and that figure now
+Pooling can also hide one good season carrying the result, so the Method tab
+breaks it out season by season. If a single year is doing all the work, the
+pooled number deserves suspicion.
+
+A bucket only feeds the confidence score when it beats break-even by more than
+two standard errors. Above break-even but inside the error bar earns nothing,
+because a few points of surplus on a couple of hundred games is what a coin
+flip looks like. Buckets that measurably lost money subtract from confidence.
+
+The backtest also produces the model's error out of sample, and that figure
 drives the board. Fitting error against the same games the ratings were built
 from gives a flatteringly small number, because current-season ratings already
-contain those results. Using it would inflate every cover probability shown. The
-Method tab prints both so the difference is visible.
+contain those results. The Method tab prints both.
 
-Where a gap bucket has at least 60 decided games, its measured hit rate replaces
-the noise estimate inside the confidence score, and the play's breakdown says
-so. Where it does not, confidence falls back to reasoning about the gap against
-the model error and says that instead.
-
-Break-even at -110 is 52.38%. If the 2 to 3 point bucket comes back under that,
-your threshold is not producing edges and the Method tab will show it plainly.
+Break-even at -110 is 52.38%. Read the All gaps row first; individual buckets
+rarely carry enough sample to say anything.
 
 ## Parlays
 

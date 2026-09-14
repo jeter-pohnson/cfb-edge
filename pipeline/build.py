@@ -261,15 +261,23 @@ def main():
     if model["total_coeffs"] is not None:
         log("  total:  n=%d, sigma=%.2f pts" % (model["total_n"], model["total_sigma"]))
 
-    log("Walk-forward backtest on %s" % (config.SEASON - 1))
+    log("Walk-forward backtest across %d seasons" % backtest.SEASONS_TO_GRADE)
     try:
         report = backtest.run(config.SEASON - 1)
         if report.get("available"):
-            for row in report["spread"]:
-                if row["decided"] >= 60:
-                    log("  spread gap %s: %d-%d, %.1f%%"
-                        % (row["bucket"], row["wins"], row["losses"],
-                           row["rate"] * 100))
+            log("  seasons: %s, %d games graded"
+                % (", ".join(str(y) for y in report.get("years", [])),
+                   report.get("graded", 0)))
+            for label, key in (("close", "spread"), ("open", "spread_open")):
+                wins = sum(r["wins"] for r in report.get(key, []))
+                losses = sum(r["losses"] for r in report.get(key, []))
+                if wins + losses:
+                    rate = wins / (wins + losses)
+                    stderr = (rate * (1 - rate) / (wins + losses)) ** 0.5
+                    log("  spread vs %-5s %d-%d, %.1f%% (break-even %.1f%%, "
+                        "one standard error %.1f pts)"
+                        % (label, wins, losses, rate * 100,
+                           backtest.BREAK_EVEN * 100, stderr * 100))
         else:
             log("  %s" % report.get("note"))
     except Exception as exc:  # noqa: BLE001

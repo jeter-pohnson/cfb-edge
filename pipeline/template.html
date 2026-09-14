@@ -885,6 +885,40 @@ function renderTeamList(){
 
 /* ------------------------------------------------------------ method */
 
+function seasonCell(row){
+  if (!row) return '<td colspan="2" style="color:var(--muted)">no data</td>';
+  var cls = row.edge_vs_breakeven > 0 ? "good" : "bad";
+  return "<td>" + row.wins + "-" + row.losses + "</td>" +
+         '<td class="' + cls + '">' + pct(row.rate) + "</td>";
+}
+
+function perSeasonHTML(bt){
+  var rows = bt.per_season || [];
+  if (rows.length < 2) return "";
+
+  var html = "<h3>Season by season</h3>";
+  html += "<p>Pooling seasons is what shrinks the error bar, but it can also " +
+    "hide a single good year carrying the whole result. If one season is doing " +
+    "all the work here, treat the pooled number with suspicion.</p>";
+  html += '<table class="bt"><thead><tr><th>Season</th><th>Graded</th>' +
+          "<th>vs close</th><th>Rate</th><th>vs open</th><th>Rate</th>" +
+          "</tr></thead><tbody>";
+  for (var i = 0; i < rows.length; i++){
+    var row = rows[i];
+    html += "<tr><td>" + esc(row.year) + "</td>";
+    if (!row.available){
+      html += '<td colspan="5" style="color:var(--muted)">' +
+              esc(row.note || "unavailable") + "</td></tr>";
+      continue;
+    }
+    html += "<td>" + (row.graded || 0) + "</td>";
+    html += seasonCell(row.spread_close);
+    html += seasonCell(row.spread_open);
+    html += "</tr>";
+  }
+  return html + "</tbody></table>";
+}
+
 function backtestTable(rows, title){
   var html = "<h3>" + esc(title) + "</h3><table class=\"bt\"><thead><tr>" +
              "<th>Gap in points</th><th>Won</th><th>Lost</th><th>Push</th>" +
@@ -992,6 +1026,7 @@ function renderMethod(){
       "margins alone, which is a simpler object than the SP+ the live board " +
       "uses. So this is still a proxy, and a mildly pessimistic one, but it is " +
       "built the same structural way and fed the same kind of information.</p>";
+    html += perSeasonHTML(bt);
     html += backtestTable(bt.spread || [], "Spread against the CLOSING line");
     html += backtestTable(bt.total || [], "Totals against the CLOSING line");
 
@@ -1004,6 +1039,11 @@ function renderMethod(){
         "it. If the model beats openers and not closes, the edge is real but " +
         "it is a timing edge, and betting Sunday and Monday becomes the whole " +
         "strategy.</p>";
+      html += "<p>Pooled across " + ((bt.years || []).length) + " seasons, " +
+        (bt.opener_rows || 0) + " graded bets with an opening number available. " +
+        "One season alone left the error bar near 2.1 points, wide enough that " +
+        "a real half-point edge and no edge at all looked identical. Watch the " +
+        "All gaps row: that is the only line with enough sample to read.</p>";
       html += backtestTable(bt.spread_open || [], "Spread against the opener");
       html += backtestTable(bt.total_open || [], "Totals against the opener");
     } else {

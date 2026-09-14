@@ -100,11 +100,17 @@ def fake_lines(year, season_type="regular"):
     out = []
     for game in _synth_games(year, completed=True):
         edge = TRUE[game["homeTeam"]] - TRUE[game["awayTeam"]] + 2.4
+        close = -round((edge + rng.gauss(0, 2.2)) * 2) / 2
+        # Opener deliberately noisier than the close, which is the whole
+        # hypothesis being tested.
+        opener = -round((edge + rng.gauss(0, 3.4)) * 2) / 2
+        total_close = round((52 + rng.gauss(0, 5)) * 2) / 2
         out.append({
             "homeTeam": game["homeTeam"], "awayTeam": game["awayTeam"],
             "lines": [{"provider": "DraftKings",
-                       "spread": -round((edge + rng.gauss(0, 2.2)) * 2) / 2,
-                       "overUnder": round((52 + rng.gauss(0, 5)) * 2) / 2}],
+                       "spread": close, "spreadOpen": opener,
+                       "overUnder": total_close,
+                       "overUnderOpen": total_close + rng.gauss(0, 2)}],
         })
     return out
 
