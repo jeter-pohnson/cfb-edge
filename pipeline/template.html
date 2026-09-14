@@ -464,8 +464,11 @@ function whyText(game, edge){
 function tagsHTML(game, edge){
   var out = [];
   out.push('<span class="tag">' + esc(edge.market) + "</span>");
+  var th = DATA.thresholds || {};
   out.push('<span class="tag' + (edge.strict ? " s" : "") + '">' +
-           (edge.strict ? "clears 3 pts" : "2 pt flag only") + "</span>");
+           (edge.strict ? "clears " + (th.strict || 6) + " pts"
+                        : (th.flag || 4) + " to " + (th.strict || 6) + " pts") +
+           "</span>");
   if (edge.keys && edge.keys.length){
     out.push('<span class="tag k">crosses ' + edge.keys.join(", ") + "</span>");
   }

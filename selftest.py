@@ -24,6 +24,8 @@ SCHOOLS = [
     ("Boise State", "Mountain West"), ("UNLV", "Mountain West"),
     ("Memphis", "American Athletic"), ("Tulane", "American Athletic"),
     ("Miami (OH)", "Mid-American"), ("Ohio", "Mid-American"),
+    # Stands in for an FCS program: present in the team list, no SP+ rating.
+    ("North Dakota State", "FCS"),
 ]
 
 TRUE = {name: random.uniform(-18, 26) for name, _ in SCHOOLS}
@@ -34,13 +36,15 @@ def fake_teams(year):
 
 
 def fake_sp(year):
+    # North Dakota State is deliberately absent, exactly as an FCS team is
+    # absent from SP+, so its rating has to be imputed.
     return [{
         "team": n,
         "rating": round(TRUE[n] + random.gauss(0, 1.4), 2),
         "ranking": i + 1,
         "offense": {"rating": round(29 + TRUE[n] * 0.45 + random.gauss(0, 2), 2)},
         "defense": {"rating": round(25 - TRUE[n] * 0.42 + random.gauss(0, 2), 2)},
-    } for i, (n, _) in enumerate(SCHOOLS)]
+    } for i, (n, _) in enumerate(SCHOOLS) if n != "North Dakota State"]
 
 
 def fake_advanced(year):
@@ -79,7 +83,11 @@ def _synth_games(year, completed):
         home_pts = max(0, round((total + margin) / 2))
         away_pts = max(0, round((total - margin) / 2))
         out.append({
-            "id": gid, "week": (gid % 14) + 1, "homeTeam": home, "awayTeam": away,
+            # Completed games spread across the season; upcoming games sit in
+            # week 8 so the live-week gate is exercised rather than short
+            # circuiting the whole board.
+            "id": gid, "week": ((gid % 14) + 1) if completed else 8,
+            "homeTeam": home, "awayTeam": away,
             "neutralSite": False, "conferenceGame": True, "completed": completed,
             "homePoints": home_pts if completed else None,
             "awayPoints": away_pts if completed else None,

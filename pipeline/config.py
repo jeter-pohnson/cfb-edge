@@ -75,6 +75,11 @@ ACTIVE_MARKETS = ("spread",)
 # stale a line is by the time you are looking at it.
 OPENER_EDGE_WINDOW_HOURS = 48
 
+# No plays before this week. The walk-forward backtest refuses to grade earlier
+# because too little has been played to rate anyone, and flagging plays on
+# ratings the backtest would not trust claims more than the evidence supports.
+FIRST_LIVE_WEEK = 5
+
 UNIT_DOLLARS = 20
 
 # Above these gaps the model is almost certainly wrong rather than the market.
@@ -82,6 +87,12 @@ UNIT_DOLLARS = 20
 # rating is still junk, or a name matched to the wrong school. Those games go
 # to a review list instead of the plays board.
 MAX_SPREAD_DISAGREEMENT = 21.0
+
+# Above this, treat the disagreement as a model failure rather than an edge.
+# The backtest validated gaps of roughly 4 to 9 points. A model asking for 12
+# more points than a sharp book is not finding value, it is broken on that game,
+# and early-season SP+ produces exactly this.
+MODEL_FAILURE_SPREAD = 10.0
 MAX_TOTAL_DISAGREEMENT = 24.0
 
 # A moneyline edge only counts when the model broadly agrees with the market on

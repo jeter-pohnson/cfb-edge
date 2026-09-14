@@ -118,9 +118,11 @@ def score_edge(game, edge, home, away, model, drivers, move,
 
     # ---- threshold
     if edge.get("strict"):
-        add(8, "Clears the 3 point threshold, not just 2")
+        add(8, "Clears %.0f points, not just the %.0f point minimum"
+               % (config.EDGE_STRICT, config.EDGE_FLAG))
     else:
-        add(-6, "Clears 2 points but not 3")
+        add(-6, "Sits between %.0f and %.0f points, the weaker half of the "
+                "validated band" % (config.EDGE_FLAG, config.EDGE_STRICT))
 
     # ---- key numbers, measured rather than assumed
     mass = edge.get("key_mass")

@@ -35,6 +35,13 @@ def log(message):
     print(message, flush=True)
 
 
+def _current_week(games):
+    """Lowest week with an unplayed game, i.e. the week being bet."""
+    weeks = [g.get("week") for g in games
+             if not g.get("completed") and g.get("week")]
+    return min(weeks) if weeks else None
+
+
 def _kickoff_ts(iso):
     if not iso:
         return None
@@ -119,6 +126,13 @@ def score_game(home_row, away_row, posted, neutral, model):
     total_ok = True
 
     if posted.get("spread") is not None and fair_spread is not None:
+        disagreement = abs(float(fair_spread) - float(posted["spread"]))
+        if disagreement > config.MODEL_FAILURE_SPREAD:
+            spread_ok = False
+            review.append(
+                "model wants %.1f more points than the market, which is past the "
+                "point where a disagreement is credible. The backtest validated "
+                "gaps of 4 to 9 points, not this" % disagreement)
         if abs(float(fair_spread) - float(posted["spread"])) > config.MAX_SPREAD_DISAGREEMENT:
             spread_ok = False
             review.append("spread disagrees by %.1f pts, past the sanity ceiling"
@@ -317,6 +331,10 @@ def main():
 
     log("Pulling the FanDuel board")
     board = odds_client.fetch_board()
+    current_week = _current_week(games_now)
+    if current_week is not None and current_week < config.FIRST_LIVE_WEEK:
+        log("  week %d is before the model is trustworthy (week %d), plays "
+            "suppressed" % (current_week, config.FIRST_LIVE_WEEK))
     log("  %d events, %s credits left of the monthly 500"
         % (len(board), odds_client.quota.get("remaining")))
 
@@ -345,6 +363,7 @@ def main():
         % (len(line_history), len(closings)))
 
     unmatched = set()
+    skipped_unrated = set()
     live_ids = set()
     rows = []
 
@@ -367,6 +386,18 @@ def main():
         if not home_row or not away_row:
             continue
 
+        # A team whose core rating was substituted with the league average is
+        # not a rated team, and the model has no opinion about it. This is what
+        # put North Dakota State at Sacramento State on the board: two FCS
+        # programs with no SP+ rating, imputed to average, then compared against
+        # a line that had one of them as a 28 point underdog. The resulting
+        # "edge" was the imputation, not a disagreement.
+        unrated = [row["school"] for row in (home_row, away_row)
+                   if "sp" in (row.get("imputed") or [])]
+        if unrated:
+            skipped_unrated.update(unrated)
+            continue
+
         info = meta.get((home_school, away_school), {})
         if info.get("completed"):
             continue
@@ -378,6 +409,18 @@ def main():
 
         scored = score_game(home_row, away_row, posted,
                             info.get("neutral", False), model)
+
+        if current_week is not None and current_week < config.FIRST_LIVE_WEEK:
+            # Fair numbers still render on the full board for reference, but
+            # nothing is flagged as a play. The backtest itself refused to grade
+            # before week 5 because there is not enough played to rate anyone,
+            # and a board that flags plays on ratings the backtest would not
+            # trust is claiming more than the evidence supports.
+            scored["review"].append(
+                "Week %d. Ratings this early are mostly preseason projection, "
+                "and the backtest does not grade before week %d, so no play is "
+                "flagged." % (current_week, config.FIRST_LIVE_WEEK))
+            scored["edges"] = []
 
         move = history.movement(line_history, posted["odds_id"],
                                 posted["spread"], posted["total"])
@@ -490,6 +533,9 @@ def main():
     if unmatched:
         log("  unmatched team names (add to names.ALIASES): %s"
             % ", ".join(sorted(unmatched)))
+    if skipped_unrated:
+        log("  skipped %d unrated teams (no SP+ rating, usually FCS): %s"
+            % (len(skipped_unrated), ", ".join(sorted(skipped_unrated))))
 
     weeks = [r["week"] for r in rows if r.get("week")]
     payload = {

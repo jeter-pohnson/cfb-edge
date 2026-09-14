@@ -183,5 +183,15 @@ check('board states the honest caveat', banner.indexOf('standard errors') > -1);
 win.showView('method');
 check('method explains what changed', q('v-method').innerHTML.indexOf('What changed, and why') > -1);
 
+// --- audit fixes
+check('no play exceeds the model-failure cap',
+      data.games.every(g => g.edges.every(e => e.gap <= 10.0)));
+check('no stale threshold labels',
+      html.indexOf('2 pt flag only') === -1 && html.indexOf('clears 3 pts') === -1);
+win.showView('plays');
+const playsHtml = q('v-plays').innerHTML;
+check('labels quote the live threshold',
+      !data.games.some(g => g.edges.length) || playsHtml.indexOf('pts') > -1);
+
 check('no runtime errors', errors.length === 0);
 if (errors.length) console.log(errors.slice(0,5));
